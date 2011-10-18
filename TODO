@@ -1,0 +1,16 @@
+symbol table
+environment vector -> hash
+memory manager ( Garbage Collector )
+
+
+to arc
+-> read arc.scm arc.arc
+
+
+Refactoring : Argorithm and Archtechture
+
+VM or git compile
+
+call/cc
+
+performance tuning.
