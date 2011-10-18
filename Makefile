@@ -3,32 +3,32 @@
 # macro
 CFLAGS = -I/usr/include/gc -L/usr/lib -lgc #-DTRACER
 
-all:		main.o object.o reader.o env.o eval.o primitives.o core.o symbol_table.o
-		g++ -o tes main.o object.o reader.o env.o eval.o primitives.o core.o symbol_table.o $(CFLAGS)
+all:			src/main.o src/object.o src/reader.o src/env.o src/eval.o src/primitives.o src/core.o src/symbol_table.o
+			g++ -o bin/arc src/main.o src/object.o src/reader.o src/env.o src/eval.o src/primitives.o src/core.o src/symbol_table.o $(CFLAGS)
 
-main.o:		main.cc
-		g++ -c main.cc $(CFLAGS)
+src/main.o:		src/main.cc
+			g++ -c src/main.cc -o src/main.o $(CFLAGS)
 
-object.o:	object.cc object.hh
-		g++ -c object.cc $(CFLAGS)
+src/object.o:		src/object.cc src/object.hh
+			g++ -c src/object.cc -o src/object.o $(CFLAGS)
 
-reader.o:	reader.cc reader.hh
-		g++ -c reader.cc $(CFLAGS)
+src/reader.o:		src/reader.cc src/reader.hh
+			g++ -c src/reader.cc -o src/reader.o $(CFLAGS)
 
-eval.o:		eval.cc eval.hh
-		g++ -c eval.cc $(CFLAGS)
+src/eval.o:		src/eval.cc src/eval.hh
+			g++ -c src/eval.cc -o src/eval.o $(CFLAGS)
 
-env.o:		env.cc env.hh
-		g++ -c env.cc $(CFLAGS)
+src/env.o:		src/env.cc src/env.hh
+			g++ -c src/env.cc -o src/env.o $(CFLAGS)
 
-primitives.o:	primitives.cc primitives.hh
-		g++ -c primitives.cc $(CFLAGS)
+src/primitives.o:	src/primitives.cc src/primitives.hh
+			g++ -c src/primitives.cc -o src/primitives.o $(CFLAGS)
 
-core.o:		core.cc core.hh
-		g++ -c core.cc $(CFLAGS)
+src/core.o:		src/core.cc src/core.hh
+			g++ -c src/core.cc -o src/core.o $(CFLAGS)
 
-symbol_table.o:	symbol_table.cc symbol_table.hh
-		g++ -c symbol_table.cc $(CFLAGS)
+src/symbol_table.o:	src/symbol_table.cc src/symbol_table.hh
+			g++ -c src/symbol_table.cc -o src/symbol_table.o $(CFLAGS)
 
 clean:
-		rm tes main.o object.o reader.o eval.o env.o primitives.o core.o symbol_table.o
+			rm -rf bin/arc src/main.o src/object.o src/reader.o src/eval.o src/env.o src/primitives.o src/core.o src/symbol_table.o
