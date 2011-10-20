@@ -2,6 +2,8 @@
 #include "object.hh"
 #include "env.hh"
 
+extern undef_t*		g_obj_undef;
+
 // frame
 frame_t::frame_t()
 {
@@ -272,6 +274,8 @@ env_t::lookup(const symbol_t* variable)
 	variable->print(buf, 1024);
 
 	CALLERROR("unbound variable. : LOOKUP %s", buf);
+
+	return g_obj_undef;
 }
 
 void

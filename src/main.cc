@@ -18,10 +18,17 @@ int id;
 #endif
 
 int main() {
+
+	fprintf(stderr,"hello\n");
+	fflush(stderr);
+
 	g_obj_nil   = new nil_t();
 	g_obj_true  = new boolean_t(true);
 	g_obj_false = new boolean_t(false);
 	g_obj_undef = new undef_t();
+
+	fprintf(stderr,"hellohello\n");
+	fflush(stderr);
 
 	g_symbol_table = *(new symbol_table());
 

@@ -1,34 +1,41 @@
 .PHONY:	all
 
 # macro
-CFLAGS = -I/usr/include/gc -L/usr/lib -lgc #-DTRACER
+CFLAGS = -I/usr/include/gc #-DTRACER
+
+ifndef CC
+  CC = gcc
+endif
+ifndef CXX
+  CXX = g++
+endif
 
 all:			src/main.o src/object.o src/reader.o src/env.o src/eval.o src/primitives.o src/core.o src/symbol_table.o
-			g++ -o bin/arc src/main.o src/object.o src/reader.o src/env.o src/eval.o src/primitives.o src/core.o src/symbol_table.o $(CFLAGS)
+			$(CXX) -o bin/arc src/main.o src/object.o src/reader.o src/env.o src/eval.o src/primitives.o src/core.o src/symbol_table.o -L/usr/lib -lgc $(CFLAGS)
 
 src/main.o:		src/main.cc
-			g++ -c src/main.cc -o src/main.o $(CFLAGS)
+			$(CXX) -c src/main.cc -o src/main.o $(CFLAGS)
 
 src/object.o:		src/object.cc src/object.hh
-			g++ -c src/object.cc -o src/object.o $(CFLAGS)
+			$(CXX) -c src/object.cc -o src/object.o $(CFLAGS)
 
 src/reader.o:		src/reader.cc src/reader.hh
-			g++ -c src/reader.cc -o src/reader.o $(CFLAGS)
+			$(CXX) -c src/reader.cc -o src/reader.o $(CFLAGS)
 
 src/eval.o:		src/eval.cc src/eval.hh
-			g++ -c src/eval.cc -o src/eval.o $(CFLAGS)
+			$(CXX) -c src/eval.cc -o src/eval.o $(CFLAGS)
 
 src/env.o:		src/env.cc src/env.hh
-			g++ -c src/env.cc -o src/env.o $(CFLAGS)
+			$(CXX) -c src/env.cc -o src/env.o $(CFLAGS)
 
 src/primitives.o:	src/primitives.cc src/primitives.hh
-			g++ -c src/primitives.cc -o src/primitives.o $(CFLAGS)
+			$(CXX) -c src/primitives.cc -o src/primitives.o $(CFLAGS)
 
 src/core.o:		src/core.cc src/core.hh
-			g++ -c src/core.cc -o src/core.o $(CFLAGS)
+			$(CXX) -c src/core.cc -o src/core.o $(CFLAGS)
 
 src/symbol_table.o:	src/symbol_table.cc src/symbol_table.hh
-			g++ -c src/symbol_table.cc -o src/symbol_table.o $(CFLAGS)
+			$(CXX) -c src/symbol_table.cc -o src/symbol_table.o $(CFLAGS)
 
 clean:
 			rm -rf bin/arc src/main.o src/object.o src/reader.o src/eval.o src/env.o src/primitives.o src/core.o src/symbol_table.o

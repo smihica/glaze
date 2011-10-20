@@ -5,10 +5,10 @@
 #include "symbol_table.hh"
 
 extern nil_t*		g_obj_nil;
-extern obj_t*       g_obj_undef;
+extern undef_t*		g_obj_undef;
 extern boolean_t*	g_obj_true;
 extern boolean_t*	g_obj_false;
-extern symbol_table	g_symbol_table; 
+extern symbol_table	g_symbol_table;
 
 #ifdef TRACER
 extern int id;
@@ -99,10 +99,10 @@ evaluator_t::is_special(const obj_t* exp)
 
 	const symbol_t* s = (symbol_t*)top;
 
-	if ( s == special_symbols[0] ) 
+	if ( s == special_symbols[0] )
 		return QUOTED;
 
-	else if ( s == special_symbols[1] ) 
+	else if ( s == special_symbols[1] )
 		return ASSIGNMENT;
 
 	else if ( s == special_symbols[2] )
@@ -179,6 +179,8 @@ evaluator_t::eval_special(evaluator_t::special_t flag, obj_t* exp, env_t* env)
 		CALLERROR("This is not a special expression -- EVAL_SPECIAL %s", buf);
 	}
 	}
+
+	return g_obj_undef;
 }
 
 inline obj_t*
@@ -211,6 +213,8 @@ error_eval_assignment:
 	exp->print(buf, 1024);
 
 	CALLERROR("error in set! : Expected variable and single expression -- EVAL_ASSIGNMENT %s", buf);
+
+	return g_obj_undef;
 }
 
 obj_t*
@@ -240,6 +244,8 @@ error_eval_if:
 	exp->print(buf, 1024);
 
 	CALLERROR("error in if : Expected 2 or 3 expressions -- EVAL_IF %s", buf);
+
+	return g_obj_undef;
 }
 
 /*
@@ -273,6 +279,8 @@ error_eval_lambda:
 	exp->print(buf, 1024);
 
 	CALLERROR("error in lambda : Expected formals and body -- EVAL_LAMBDA %s", buf);
+
+	return g_obj_undef;
 }
 
 /*
@@ -336,6 +344,7 @@ error_eval_definition:
 
 	CALLERROR("expected symbol or cons for first clause -- EVAL_DEFINITION %s", buf);
 
+	return g_obj_undef;
 }
 
 obj_t*
@@ -419,6 +428,8 @@ evaluator_t::apply(function_t* proc, obj_t* args)
 
 		CALLERROR("unknown procedure type -- APPLY %s", buf);
 	}
+
+	return g_obj_undef;
 }
 
 obj_t*

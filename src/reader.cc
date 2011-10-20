@@ -6,6 +6,7 @@
 extern nil_t*		g_obj_nil;
 extern boolean_t*	g_obj_true;
 extern boolean_t*	g_obj_false;
+extern undef_t*		g_obj_undef;
 extern symbol_table	g_symbol_table;
 
 bool reader_t::s_char_map_ready;
@@ -334,6 +335,8 @@ obj_t* reader_t::read_list(bool bracketed)
     }
 
     CALLERROR("unexpected end-of-file while reading list");
+
+	return g_obj_undef;
 }
 
 /*
@@ -367,7 +370,10 @@ obj_t* reader_t::read_symbol()
 		i++;
 		continue;
     }
+
     CALLERROR("token buffer overflow while reading identifier");
+
+	return g_obj_undef;
 }
 
 //
