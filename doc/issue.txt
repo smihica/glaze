@@ -1,0 +1,20 @@
+;; macro is able to have a closure.
+;; but macro definition is global.
+
+(def tes (x)
+  (let y 10
+    (mac m ()
+      (if (is y x) '(list 'equal)
+          (< y x) '(list 'bigger)
+          (> y z) '(list 'smaller)))))
+
+arc> (tes 10)
+
+arc> (m)
+(equal)
+
+arc> (tes 20)
+
+arc> (m)
+(bigger)
+

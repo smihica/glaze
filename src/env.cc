@@ -182,39 +182,44 @@ env_t::extend(std::vector<const symbol_t*>* variables, std::vector<obj_t*>* valu
 void
 env_t::extend(obj_t* params, obj_t* args)
 {
-	std::vector<const symbol_t*>* vars = new std::vector<const symbol_t*>();
-	std::vector<obj_t*>*    vals = new std::vector<obj_t*>();
+	std::vector<const symbol_t*>*	vars = new std::vector<const symbol_t*>();
+	std::vector<obj_t*>*			vals = new std::vector<obj_t*>();
 	obj_t* var;
 	obj_t* val;
 
-	if (!NILP(params)) {
+	while (!NILP(params)) {
+
+		if (SYMBOLP(params)) {
+			vars->push_back((const symbol_t*)params);
+			vals->push_back(args);
+			break;
+		}
+
 		if (!CONSP(params)) goto error_extend_obj_t;
 
-		while (!NILP(params)) {
-			var = CAR(params);
-
-			if (!SYMBOLP(var)) {
-				char buf[1024];
-				params->print(buf, 1024);
-
-				CALLERROR("param must be a SYMBOL -- EXTEND params = %s", buf);
-			}
-
-			vars->push_back((const symbol_t*)var);
-
-			params = CDR(params);
+		if (NILP(args)) {
+			CALLERROR("too few arguments supplied -- EXTEND");
 		}
+
+		var = CAR(params);
+		val = CAR(args);
+
+		if (!SYMBOLP(var)) {
+			char buf[1024];
+			params->print(buf, 1024);
+
+			CALLERROR("param must be a SYMBOL -- EXTEND params = %s", buf);
+		}
+
+		vars->push_back((const symbol_t*)var);
+		vals->push_back(val);
+
+		params = CDR(params);
+		args   = CDR(args);
 	}
 
-	if (!NILP(args)) {
-		if (!CONSP(args)) goto error_extend_obj_t;
-
-		while (!NILP(args)) {
-			val = CAR(args);
-			vals->push_back(val);
-
-			args = CDR(args);
-		}
+	if (NILP(params) && !NILP(args)) {
+		CALLERROR("too many arguments supplied -- EXTEND");
 	}
 
 	extend(vars, vals);
@@ -226,7 +231,7 @@ error_extend_obj_t:
 	params->print(buf1, 1024);
 	args->print(buf2, 1024);
 
-	CALLERROR("params and args must be NIL or CONS -- EXTEND params = %s, args = %s", buf1, buf2);
+	CALLERROR("params and args must be SYMOBL or NIL or CONS -- EXTEND params = %s, args = %s", buf1, buf2);
 }
 
 void

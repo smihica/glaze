@@ -9,9 +9,12 @@
 symbol_table	g_symbol_table;
 
 nil_t*			g_obj_nil;
+t_t*			g_obj_t;
 undef_t*		g_obj_undef;
-boolean_t*		g_obj_true;
-boolean_t*		g_obj_false;
+
+reader_t*		g_reader;
+evaluator_t*	g_evaluator;
+env_t*			g_global_env;
 
 #ifdef TRACER
 int id;
@@ -19,43 +22,37 @@ int id;
 
 int main() {
 
-	fprintf(stderr,"hello\n");
-	fflush(stderr);
-
 	g_obj_nil   = new nil_t();
-	g_obj_true  = new boolean_t(true);
-	g_obj_false = new boolean_t(false);
+	g_obj_t		= new t_t();
 	g_obj_undef = new undef_t();
 
-	fprintf(stderr,"hellohello\n");
-	fflush(stderr);
-
+	// Important this order.
+	// Because g_symbol_table is refered in
+	// the reader and the evaluator and the env.
 	g_symbol_table = *(new symbol_table());
 
-	reader_t	r = reader_t();
-	evaluator_t e = evaluator_t();
-	env_t  		env = env_t();
+	g_reader		= new reader_t();
+	g_evaluator		= new evaluator_t();
+	g_global_env	= new env_t();
 
 	std::vector<const symbol_t*>*	primitive_variables = new std::vector<const symbol_t*>();
 	std::vector<obj_t*>*			primitive_values	= new std::vector<obj_t*>();
 
 	prim::setup_primitives(primitive_variables, primitive_values);
 
-	primitive_variables->push_back(g_symbol_table.get("#t"));
-	primitive_variables->push_back(g_symbol_table.get("#f"));
-	primitive_values->push_back((obj_t*)g_obj_true);
-	primitive_values->push_back((obj_t*)g_obj_false);
+	primitive_variables->push_back(g_symbol_table.get("nil"));
+	primitive_values->push_back((obj_t*)g_obj_nil);
+	primitive_variables->push_back(g_symbol_table.get("t"));
+	primitive_values->push_back((obj_t*)g_obj_t);
 
-	env.extend(primitive_variables, primitive_values);
-
-//	g_symbol_table.print();
+	g_global_env->extend(primitive_variables, primitive_values);
 
 retry:
 	try {
 		while (1) {
 			printf(">");
 			obj_t* result;
-			obj_t* obj = r.read_expr();
+			obj_t* obj = g_reader->read_expr();
 #ifdef TRACER
 			id = 0;
 			printf("start evaluate : ");
@@ -63,7 +60,7 @@ retry:
 			printf("\n");
 			g_symbol_table.print();
 #endif
-			result = e.eval(obj, &env);
+			result = g_evaluator->eval(obj, g_global_env);
 #ifdef TRACER
 			printf("last result is : ");
 #endif
@@ -75,7 +72,7 @@ retry:
 		goto retry;
 	}
 
-	env.enclose();
+	g_global_env->enclose();
 	return 0;
 }
 

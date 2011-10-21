@@ -4,8 +4,7 @@
 #include "symbol_table.hh"
 
 extern nil_t*		g_obj_nil;
-extern boolean_t*	g_obj_true;
-extern boolean_t*	g_obj_false;
+extern t_t*			g_obj_t;
 extern undef_t*		g_obj_undef;
 extern symbol_table	g_symbol_table;
 
@@ -430,27 +429,11 @@ top:
 		switch (c) {
 		case EOF:
 			CALLERROR("unexpected end-of-file following sharp-sign(#)");
-		case 'f': case 'F': {
-			int c2 = get();
-			if (c2 == EOF || delimited(c2)) {
-				unget();
-				return g_obj_false;
-			}
-			CALLERROR("invalid lexical syntax #%c%c", c, c2);
-		}
-		case 't': case 'T':{
-			int c2 = get();
-			if (c2 == EOF || delimited(c2)) {
-				unget();
-				return g_obj_true;
-			}
-			CALLERROR("invalid lexical syntax #%c%c",  c, c2);
-		}
 		}
 		CALLERROR("invalid lexical syntax #%c", c);
 	case ',':
 		c = get();
-		if (c == EOF) CALLERROR("unexpected end-of -file following comma(,)");
+		if (c == EOF) CALLERROR("unexpected end-of-file following comma(,)");
 		if (c == '@') return make_list_2items(S_UNQUOTE_SPLICING, read_expr());
 		unget();
 		return make_list_2items(S_UNQUOTE, read_expr());

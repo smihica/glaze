@@ -3,10 +3,6 @@
 
 #include "core.hh"
 
-#define READ_STRING_SMALL_BUFFER_SIZE	1024
-#define READ_NUMBER_BUFFER_SIZE			256
-#define MAX_READ_SYMBOL_LENGTH			256
-
 class reader_t {
 public:
 	reader_t();

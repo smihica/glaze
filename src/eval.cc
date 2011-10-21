@@ -5,9 +5,8 @@
 #include "symbol_table.hh"
 
 extern nil_t*		g_obj_nil;
+extern t_t*			g_obj_t;
 extern undef_t*		g_obj_undef;
-extern boolean_t*	g_obj_true;
-extern boolean_t*	g_obj_false;
 extern symbol_table	g_symbol_table;
 
 #ifdef TRACER
@@ -17,24 +16,20 @@ extern int id;
 evaluator_t::evaluator_t()
 {
 	special_symbols[0] = g_symbol_table.get("quote");
-	special_symbols[1] = g_symbol_table.get("set!");
+	special_symbols[1] = g_symbol_table.get("assign");
 	special_symbols[2] = g_symbol_table.get("if");
-	special_symbols[3] = g_symbol_table.get("lambda");
-	special_symbols[4] = g_symbol_table.get("define");
-	special_symbols[5] = g_symbol_table.get("begin");
-	special_symbols[6] = g_symbol_table.get("and");
-	special_symbols[7] = g_symbol_table.get("or");
+	special_symbols[3] = g_symbol_table.get("fn");
+	special_symbols[4] = g_symbol_table.get("def");
+	special_symbols[5] = g_symbol_table.get("%nameless_mac");
+	special_symbols[6] = g_symbol_table.get("mac");
+	special_symbols[7] = g_symbol_table.get("do");
+	special_symbols[8] = g_symbol_table.get("and");
+	special_symbols[9] = g_symbol_table.get("or");
 }
 
 obj_t*
 evaluator_t::eval(obj_t* exp, env_t* env) {
 	evaluator_t::special_t flag;
-/*
-	printf("eval: ");
-	exp->print();
-	printf("\n");
-	fflush(stdout);
-*/
 
 	if (is_self_evaluating(exp))
 		return exp;
@@ -47,17 +42,22 @@ evaluator_t::eval(obj_t* exp, env_t* env) {
 		return eval_special(flag, exp, env);
 
 	else if (is_application(exp)) {
-		obj_t* fn = (eval(CAR(exp), env));
+		obj_t* top = (eval(CAR(exp), env));
 
-		if (!FUNCTIONP(fn)) {
-			char buf[1024];
-			exp->print(buf, 1024);
-
-			CALLERROR("attempt call non-procedure -- EVAL %s", buf);
+		if (FUNCTIONP(top)) {
+			return apply((function_t*)top,
+						 list_of_values(CDR(exp), env));
 		}
 
-		return apply((function_t*)fn,
-					 list_of_values(CDR(exp), env));
+		if (MACROP(top)) {
+			obj_t* expr = expand_macro((macro_t*)top, CDR(exp));
+			return eval(expr, env);
+		}
+
+		char buf[1024];
+		exp->print(buf, 1024);
+
+		CALLERROR("attempt call non-procedure -- EVAL %s", buf);
 	}
 	else
 	{
@@ -73,7 +73,7 @@ evaluator_t::eval(obj_t* exp, env_t* env) {
 inline bool
 evaluator_t::is_self_evaluating(const obj_t* exp)
 {
-	return (NUMBERP(exp) || STRINGP(exp) || BOOLEANP(exp));
+	return (NUMBERP(exp) || STRINGP(exp));
 }
 
 
@@ -109,18 +109,24 @@ evaluator_t::is_special(const obj_t* exp)
 		return IF_STAT;
 
 	else if ( s == special_symbols[3] )
-		return LAMBDA_STAT;
+		return FN_STAT;
 
 	else if ( s == special_symbols[4] )
-		return DEFINE_STAT;
+		return DEF_STAT;
 
 	else if ( s == special_symbols[5] )
-		return BEGIN_STAT;
+		return NLMAC_STAT;
 
 	else if ( s == special_symbols[6] )
-		return AND_STAT;
+		return MAC_STAT;
 
 	else if ( s == special_symbols[7] )
+		return DO_STAT;
+
+	else if ( s == special_symbols[8] )
+		return AND_STAT;
+
+	else if ( s == special_symbols[9] )
 		return OR_STAT;
 
 	else
@@ -131,7 +137,7 @@ evaluator_t::is_special(const obj_t* exp)
 inline bool
 evaluator_t::is_true(const obj_t* exp)
 {
-	return (!(BOOLEANP(exp)) || (((boolean_t*)exp)->get_cond()));
+	return !NILP(exp);
 }
 
 inline bool
@@ -162,12 +168,16 @@ evaluator_t::eval_special(evaluator_t::special_t flag, obj_t* exp, env_t* env)
 		return eval_assignment(exp, env);
 	case IF_STAT:
 		return eval_if(exp, env);
-	case LAMBDA_STAT:
-		return eval_lambda(exp, env);
-	case DEFINE_STAT:
-		return eval_definition(exp, env);
-	case BEGIN_STAT:
-		return eval_begin(exp, env);
+	case FN_STAT:
+		return eval_fn(exp, env);
+	case DEF_STAT:
+		return eval_def(exp, env);
+	case NLMAC_STAT:
+		return eval_nameless_mac(exp, env);
+	case MAC_STAT:
+		return eval_mac(exp, env);
+	case DO_STAT:
+		return eval_do(exp, env);
 	case AND_STAT:
 		return eval_and(exp, env);
 	case OR_STAT:
@@ -186,15 +196,27 @@ evaluator_t::eval_special(evaluator_t::special_t flag, obj_t* exp, env_t* env)
 inline obj_t*
 evaluator_t::eval_quote(obj_t* exp, env_t* env)
 {
+	if (NILP(CDR(exp))) {
+		char buf[1024];
+		exp->print(buf, 1024);
+
+		CALLERROR("error in quote! : Expects argument of type cadrable value -- EVAL_QUOTE %s", buf);
+	}
+
 	return CADR(exp);
 }
 
 obj_t*
 evaluator_t::eval_assignment(obj_t* exp, env_t* env)
 {
-	obj_t* second = NULL;
-	obj_t* third = NULL;
+	obj_t* rest;
+	obj_t* second;
+	obj_t* third;
 	obj_t* ret;
+	const symbol_t* sym;
+
+	rest = CDR(exp);
+	if (NILP(rest)) goto error_eval_assignment;
 
 	second =  CADR(exp);
 	if (NILP(second) || (!is_variable(second))) goto error_eval_assignment;
@@ -203,8 +225,14 @@ evaluator_t::eval_assignment(obj_t* exp, env_t* env)
 	if (NILP(third)) goto error_eval_assignment;
 
 	ret	= eval(third, env);
+	sym = (const symbol_t*)second;
 
-	env->set( (const symbol_t*)second, ret );
+	if (CLOSUREP(ret))
+		((closure_t*)ret)->set_name(sym->name());
+	else if (MACROP(ret))
+		((macro_t*)ret)->set_name(sym->name());
+
+	env->define(sym, ret);
 
 	return ret;
 
@@ -220,51 +248,159 @@ error_eval_assignment:
 obj_t*
 evaluator_t::eval_if(obj_t* exp, env_t* env)
 {
-	obj_t* second = CADR(exp);
+	size_t	index = 0;
+	bool	skip = true;
+	obj_t*	rest;
+	obj_t*	first;
 
-	if (NILP(second)) goto error_eval_if;
+	rest = CDR(exp);
+	if (NILP(rest)) return g_obj_nil;
 
-	if (is_true(eval(second, env))) {
-		obj_t* third = CADDR(exp);
-		if (NILP(third)) goto error_eval_if;
+	index++;
 
-		return eval(third, env);
+	while (!NILP(rest)) {
+		first = CAR(rest);
+		if ((index % 2) != 0) {
 
-	} else {
-		obj_t* fourth = CADDR(CDR(exp));
-		if (NILP(fourth))
-		{
-			return g_obj_undef;
+			if (NILP(CDR(rest))) // last item. this is not a condition.
+				return eval(first, env);
+
+			// condition
+			if (is_true(eval(first, env))) {
+				skip = false;
+			}
+		} else {
+			if (!skip) return eval(first, env);
 		}
-		return eval(fourth, env);
+
+		index++;
+		rest = CDR(rest);
 	}
 
-error_eval_if:
+	return g_obj_nil;
+}
+
+/*
+  (%nameless_mac)
+  (%nameless_mac a)
+  (%nameless_mac a b)
+  (%nameless_mac "ab" c)
+ */
+obj_t*
+evaluator_t::eval_nameless_mac(obj_t* exp, env_t* env)
+{
+	obj_t* second;
+	obj_t* rest;
+	macro_t* ret;
+
+	if (NILP(CDR(exp))) goto error_eval_nameless_mac;
+
+	second = CADR(exp);
+	if (NILP(second)) goto error_eval_nameless_mac;
+	rest = CDDR(exp);
+
+	ret = new macro_t(second, rest, env);
+
+	char pos[32];
+	snprintf(pos, 31, "#%p", ret);
+	ret->set_name(pos);
+
+	return ret;
+
+error_eval_nameless_mac:
 	char buf[1024];
 	exp->print(buf, 1024);
 
-	CALLERROR("error in if : Expected 2 or 3 expressions -- EVAL_IF %s", buf);
+	CALLERROR("error in nameless_mac : Expected formals and body -- EVAL_NAMELESS_MAC %s", buf);
 
 	return g_obj_undef;
 }
 
 /*
-  (lambda)
-  (lambda (a))
-  (lambda a b)
-  (lambda "ab" c)
+  (mac)
+  (mac a)
+  (mac a b)
+  (mac a b)
+  (mac "ab" c)
  */
 obj_t*
-evaluator_t::eval_lambda(obj_t* exp, env_t* env)
+evaluator_t::eval_mac(obj_t* exp, env_t* env)
 {
-	obj_t* second	= NULL;
-	obj_t* rest		= NULL;
-	closure_t* ret;
+	obj_t* second;
+	obj_t* third;
+	obj_t* rest;
+	obj_t* definition_value;
+	obj_t* obj;
+
+	const symbol_t* definition_variable;
+
+	if (NILP(CDR(exp))) goto error_eval_mac1;
 
 	second = CADR(exp);
-	if (NILP(second)) goto error_eval_lambda;
+	if (NILP(second)) goto error_eval_mac1;
+
+	if (NILP(CDDR(exp))) goto error_eval_mac1;
+
+	third = CADDR(exp);
+	if (!(SYMBOLP(third) || CONSP(third))) {
+		char buf[1024];
+		exp->print(buf, 1024);
+
+		CALLERROR("mac: expected symbol or cons for second clause -- EVAL_MAC %s", buf);
+	}
+
+	rest = CDDDR(exp);
+
+	if (!is_variable(second)) goto error_eval_mac2;
+
+	definition_variable = (const symbol_t*)second;
+	definition_value = new cons_t(const_cast<symbol_t*>(g_symbol_table.get("%nameless_mac")),
+								  new cons_t(third, rest));
+
+	obj = eval(definition_value, env);
+
+	if (MACROP(obj)) {
+		((macro_t*)obj)->set_name(definition_variable->name());
+	}
+
+	env->define(definition_variable, obj);
+
+	return obj;
+
+error_eval_mac1:
+	char buf1[1024];
+	exp->print(buf1, 1024);
+
+	CALLERROR("mac: expected at least 2 arguments -- EVAL_MAC %s", buf1);
+
+error_eval_mac2:
+	char buf2[1024];
+	exp->print(buf2, 1024);
+
+	CALLERROR("mac: expected symbol for first clause -- EVAL_MAC %s", buf2);
+
+	return g_obj_undef;
+}
+
+/*
+  (fn)
+  (fn a)
+  (fn a b)
+  (fn "ab" c)
+ */
+obj_t*
+evaluator_t::eval_fn(obj_t* exp, env_t* env)
+{
+	obj_t* second;
+	obj_t* rest;
+	closure_t* ret;
+
+	if (NILP(CDR(exp))) goto error_eval_fn;
+
+	second = CADR(exp);
+	if (NILP(second)) goto error_eval_fn;
 	rest = CDDR(exp);
-	if (NILP(rest))  goto error_eval_lambda;
+//	if (NILP(rest))  goto error_eval_fn; // disable empty fn.
 
 	ret = new closure_t(second, rest, env);
 
@@ -274,75 +410,77 @@ evaluator_t::eval_lambda(obj_t* exp, env_t* env)
 
 	return ret;
 
-error_eval_lambda:
+error_eval_fn:
 	char buf[1024];
 	exp->print(buf, 1024);
 
-	CALLERROR("error in lambda : Expected formals and body -- EVAL_LAMBDA %s", buf);
+	CALLERROR("error in fn : Expected formals and body -- EVAL_FN %s", buf);
 
 	return g_obj_undef;
 }
 
 /*
-  (define)
-  (define (a))
-  (define (a) b)
-  (define a b)
-  (define "ab" c)
-
+  (def)   -> error
+  (def a) -> error
+  (def a b)
+  (def a b)
+  (def "ab" c)
  */
 obj_t*
-evaluator_t::eval_definition(obj_t* exp, env_t* env)
+evaluator_t::eval_def(obj_t* exp, env_t* env)
 {
-	obj_t* second = CADR(exp);
+	obj_t* second;
+	obj_t* third;
+	obj_t* rest;
+	obj_t* definition_value;
+	obj_t* obj;
+	const symbol_t* definition_variable;
 
-	if (NILP(second)) {
+	if (NILP(CDR(exp))) goto error_eval_def1;
+
+	second = CADR(exp);
+	if (NILP(second)) goto error_eval_def1;
+
+	if (NILP(CDDR(exp))) goto error_eval_def1;
+
+	third = CADDR(exp);
+	if (!(SYMBOLP(third) || CONSP(third))) {
 		char buf[1024];
 		exp->print(buf, 1024);
 
-		CALLERROR("expected 1 or 2, but no clause given -- EVAL_DEFINITION %s", buf);
+		CALLERROR("def: expected symbol or cons for second clause -- EVAL_DEF %s", buf);
+
 	}
 
-	obj_t* definition_value;
-	obj_t* definition_variable;
+	rest = CDDDR(exp);
 
-	obj_t* obj;
+	if (!is_variable(second)) goto error_eval_def2;
 
-	if (is_variable(second)) {
-		definition_variable = second;
-
-		obj_t* third = CADDR(exp);
-		if (NILP(third)) {
-			definition_value = g_obj_undef;
-		} else {
-			definition_value = third;
-		}
-
-	} else if (CONSP(second)) {
-		definition_variable = CAR(second);
-
-		if (!is_variable(definition_variable)) goto error_eval_definition;
-
-		definition_value = new cons_t( const_cast<symbol_t*>(g_symbol_table.get("lambda")),
-									   new cons_t(CDR(second), CDDR(exp)));
-
-	} else goto error_eval_definition;
+	definition_variable = (const symbol_t*)second;
+	definition_value = new cons_t(const_cast<symbol_t*>(g_symbol_table.get("fn")),
+								  new cons_t(third, rest));
 
 	obj = eval(definition_value, env);
 
 	if (CLOSUREP(obj)) {
-		((closure_t*)obj)->set_name(((const symbol_t*)definition_variable)->name());
+		((closure_t*)obj)->set_name(definition_variable->name());
 	}
 
-	env->define( (const symbol_t*)definition_variable, obj );
+	env->define(definition_variable, obj);
 
 	return obj;
 
-error_eval_definition:
-	char buf[1024];
-	exp->print(buf, 1024);
+error_eval_def1:
+	char buf1[1024];
+	exp->print(buf1, 1024);
 
-	CALLERROR("expected symbol or cons for first clause -- EVAL_DEFINITION %s", buf);
+	CALLERROR("def: expected at least 2 arguments -- EVAL_DEF %s", buf1);
+
+error_eval_def2:
+	char buf2[1024];
+	exp->print(buf2, 1024);
+
+	CALLERROR("def: expected symbol for first clause -- EVAL_DEF %s", buf2);
 
 	return g_obj_undef;
 }
@@ -350,6 +488,7 @@ error_eval_definition:
 obj_t*
 evaluator_t::eval_sequence(obj_t* exps, env_t* env)
 {
+	if (NILP(exps)) return g_obj_nil;
 
 	obj_t* rest = CDR(exps);
 
@@ -361,12 +500,12 @@ evaluator_t::eval_sequence(obj_t* exps, env_t* env)
 }
 
 obj_t*
-evaluator_t::eval_begin(obj_t* exp, env_t* env)
+evaluator_t::eval_do(obj_t* exp, env_t* env)
 {
 	obj_t* rest = CDR(exp);
 
 	if (NILP(rest))
-		return g_obj_undef;
+		return g_obj_nil;
 
 	return eval_sequence(rest, env);
 }
@@ -374,13 +513,20 @@ evaluator_t::eval_begin(obj_t* exp, env_t* env)
 obj_t*
 evaluator_t::eval_and_sequence(obj_t* exps, env_t* env)
 {
+	obj_t* last = g_obj_t;
 
-	if (NILP(exps)) return g_obj_true;
+	if (CONSP(exps)) {
+		while (!NILP(exps)) {
 
-	if (is_true(eval(CAR(exps), env)))
-		return eval_and_sequence(CDR(exps), env);
+			if(!is_true(eval(CAR(exps), env)))
+				return g_obj_nil;
 
-	return g_obj_false;
+			last = CAR(exps);
+			exps = CDR(exps);
+		}
+	}
+
+	return last;
 }
 
 inline obj_t*
@@ -393,12 +539,17 @@ obj_t*
 evaluator_t::eval_or_sequence(obj_t* exps, env_t* env)
 {
 
-	if (NILP(exps)) return g_obj_false;
+	if (CONSP(exps)) {
+		while (!NILP(exps)) {
 
-	if (is_true(eval(CAR(exps), env)))
-		return g_obj_true;
+			if(is_true(eval(CAR(exps), env)))
+				return CAR(exps);
 
-	return eval_or_sequence(CDR(exps), env);
+			exps = CDR(exps);
+		}
+	}
+
+	return g_obj_nil;
 }
 
 inline obj_t*
@@ -412,11 +563,12 @@ evaluator_t::eval_or(obj_t* exp, env_t* env)
 obj_t*
 evaluator_t::apply(function_t* proc, obj_t* args)
 {
+
 	if (is_primitive_procedure(proc)) {
 		try {
 			return apply_primitive_procedure((subr_t*)proc, args);
 		} catch (const char* message) {
-			CALLERROR("APPLY : in primitive procedure -- %s", message);
+			CALLERROR("primitive procedure -- APPLY %s", message);
 		}
 
 	} else if (is_compound_procedure(proc)) {
@@ -465,7 +617,7 @@ evaluator_t::apply_compound_procedure(closure_t* proc, obj_t* args)
 	proc->env()->extend(proc->param(), args);
 	obj_t* ret = eval_sequence(proc->body(), proc->env());
 	proc->env()->enclose();
-	
+
 #ifdef TRACER
 	for(int i=0; i<id; i++){ printf("  "); }
 	printf("the result of id:%d is --- ", id);
@@ -482,6 +634,18 @@ inline bool
 evaluator_t::is_compound_procedure(const function_t* proc)
 {
 	return CLOSUREP(proc);
+}
+
+
+// macro
+obj_t*
+evaluator_t::expand_macro(macro_t* macro_fn, obj_t* exp)
+{
+	macro_fn->env()->extend(macro_fn->param(), exp);
+	obj_t* ret = eval_sequence(macro_fn->body(), macro_fn->env());
+	macro_fn->env()->enclose();
+
+	return ret;
 }
 
 void evaluator_t::error(const char* fname, unsigned int line, const char* fmt, ...)

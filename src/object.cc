@@ -9,10 +9,7 @@ obj_t::obj_t() {
 	m_type = OBJECT;
 }
 
-obj_t::~obj_t() {
-	fprintf(stderr, "--- collected objtype:%d ---.\n", (int)m_type);
-	fflush(stderr);
-}
+obj_t::~obj_t() {}
 
 ssize_t obj_t::print() const { return print_proc(stdout); }
 ssize_t obj_t::print(FILE* fp) const { return print_proc(fp); }
@@ -104,21 +101,21 @@ nil_t::nil_t() {
 ssize_t
 nil_t::print_proc(FILE* fp) const
 {
-	const char* str = "()";
+	const char* str = "nil";
 	return fprintf(fp, "%s", str);
 }
 
 ssize_t
 nil_t::print_proc(int fd) const
 {
-	const char* str = "()";
+	const char* str = "nil";
 	return fdprintf(fd, "%s", str);
 }
 
 ssize_t
 nil_t::print_proc(char* target, size_t size) const
 {
-	const char* str = "()";
+	const char* str = "nil";
 	return snprintf(target, size, "%s", str);
 }
 
@@ -133,13 +130,11 @@ cons_t::cons_t(obj_t* car_ptr, obj_t* cdr_ptr) {
 
 void
 cons_t::set_car(obj_t* car_ptr) {
-	// todo memory leak.
 	m_car_ptr = car_ptr;
 }
 
 void
 cons_t::set_cdr(obj_t* cdr_ptr) {
-	// todo memory leak.
 	m_cdr_ptr = cdr_ptr;
 }
 
@@ -625,38 +620,37 @@ symbol_t::print_proc(char* target, size_t size) const
 
 
 /*
-** boolean_t
+** t_t
 */
-boolean_t::boolean_t(bool cond) {
-    m_type = BOOLEAN;
-	m_cond = cond;
+t_t::t_t() {
+    m_type = T;
 }
 
 ssize_t
-boolean_t::print_proc(FILE* fp) const
+t_t::print_proc(FILE* fp) const
 {
-	if(fprintf(fp, (m_cond)?"#t":"#f") < 0)
+	if(fprintf(fp, "t") < 0)
 		CALLERROR("fprintf() failed.");
 
-	return 2;
+	return 1;
 }
 
 ssize_t
-boolean_t::print_proc(int fd) const
+t_t::print_proc(int fd) const
 {
-	if(fdprintf(fd, (m_cond)?"#t":"#f") < 0)
+	if(fdprintf(fd, "t") < 0)
 		CALLERROR("dprintf() failed.");
 
-	return 2;
+	return 1;
 }
 
 ssize_t
-boolean_t::print_proc(char* target, size_t size) const
+t_t::print_proc(char* target, size_t size) const
 {
-	if (snprintf(target, size, (m_cond)?"#t":"#f") < 0)
+	if (snprintf(target, size, "t") < 0)
 		CALLERROR("snprintf() failed.");
 
-	return 2;
+	return 1;
 }
 
 /*
@@ -735,4 +729,49 @@ ssize_t
 closure_t::print_proc(char* target, size_t size) const
 {
 	return snprintf(target, size, "#<closure %s>", m_name == NULL ? "#f" : m_name);
+}
+
+
+/*
+** macro_t
+*/
+macro_t::macro_t(obj_t* parameters, obj_t* body, env_t* env)
+{
+    m_type = MACRO;
+	m_parameters = parameters;
+	m_body = body;
+	m_env = new env_t(*env);
+
+	m_name = NULL;
+}
+
+macro_t::~macro_t()
+{
+	free(m_name);
+	delete m_env;
+}
+
+void
+macro_t::set_name(const char* name)
+{
+	m_name = (char*)realloc(m_name, strlen(name)+1);
+	memcpy(m_name, name, strlen(name)+1);
+}
+
+ssize_t
+macro_t::print_proc(FILE* fp) const
+{
+	return fprintf(fp, "#<macro %s>", m_name == NULL ? "#f" : m_name);
+}
+
+ssize_t
+macro_t::print_proc(int fd) const
+{
+	return fdprintf(fd, "#<macro %s>", m_name == NULL ? "#f" : m_name);
+}
+
+ssize_t
+macro_t::print_proc(char* target, size_t size) const
+{
+	return snprintf(target, size, "#<macro %s>", m_name == NULL ? "#f" : m_name);
 }

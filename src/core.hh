@@ -10,6 +10,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
+#include <fcntl.h>
 
 #include <vector>
 
@@ -28,5 +29,9 @@
 
 ssize_t fdprintf(int fd, const char *fmt, ...);
 #endif
+
+#define READ_STRING_SMALL_BUFFER_SIZE	1024
+#define READ_NUMBER_BUFFER_SIZE			256
+#define MAX_READ_SYMBOL_LENGTH			256
 
 #endif

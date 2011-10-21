@@ -22,13 +22,14 @@ public:
 		OBJECT		= 0,
 		UNDEF		= 1,
 		NIL			= 2,
-		CONS		= 3,
-		SYMBOL		= 4,
-		NUMBER		= 5,
-		STRING		= 6,
-		BOOLEAN		= 7,
+		T			= 3,
+		CONS		= 4,
+		SYMBOL		= 5,
+		NUMBER		= 6,
+		STRING		= 7,
 		SUBR		= 8,
 		CLOSURE		= 9,
+		MACRO		= 10,
 	};
 	int	type() const;
 protected:
@@ -226,23 +227,20 @@ private:
 #define SYMBOLP(obj) ((int)((obj)->type()) == (int)(obj_t::SYMBOL))
 
 /*
-** boolean_t
+** t_t
 */
-class boolean_t :
+class t_t :
 	public obj_t {
 public:
-	boolean_t(bool cond);
-	inline bool get_cond() { return m_cond; }
+	t_t();
 
 private:
-	bool m_cond;
-
 	virtual ssize_t print_proc(FILE* fp) const;
 	virtual ssize_t print_proc(int fd) const;
 	virtual ssize_t print_proc(char* target, size_t size) const;
 };
 
-#define BOOLEANP(obj) ((int)((obj)->type()) == (int)(obj_t::BOOLEAN))
+#define TP(obj) ((int)((obj)->type()) == (int)(obj_t::T))
 
 /*
 ** function_t (virtual)
@@ -301,6 +299,35 @@ private:
 };
 
 #define CLOSUREP(obj) ((int)(obj->type()) == (int)(obj_t::CLOSURE))
+
+/*
+** macro_t
+*/
+class macro_t :
+	public obj_t {
+public:
+	macro_t(obj_t* parameters, obj_t* body, env_t* env);
+	~macro_t();
+
+	inline obj_t* param() const { return m_parameters; };
+	inline obj_t* body() const { return m_body; };
+	inline env_t* env()  const { return m_env; };
+	inline const char* name() const { return m_name == NULL ? "#f" : m_name; };
+
+	void set_name(const char* name);
+
+private:
+	obj_t* m_parameters;
+	obj_t* m_body;
+	env_t* m_env;
+	char* m_name;
+
+	virtual ssize_t print_proc(FILE* fp) const;
+	virtual ssize_t print_proc(int fd) const;
+	virtual ssize_t print_proc(char* target, size_t size) const;
+};
+
+#define MACROP(obj) ((int)(obj->type()) == (int)(obj_t::MACRO))
 
 
 #endif
