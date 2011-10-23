@@ -1,7 +1,9 @@
 .PHONY:	all
 
 # macro
-CFLAGS = -I/usr/include/gc #-DTRACER
+LIBGC_PREFIX=
+CFLAGS = -I$(LIBGC_PREFIX)/include/gc #-DTRACER
+LDFLAGS = -L$(LIBGC_PREFIX)/lib #-DTRACER
 
 ifndef CC
   CC = gcc
@@ -11,7 +13,7 @@ ifndef CXX
 endif
 
 all:			src/main.o src/object.o src/reader.o src/env.o src/eval.o src/primitives.o src/core.o src/symbol_table.o
-			$(CXX) -o bin/arc src/main.o src/object.o src/reader.o src/env.o src/eval.o src/primitives.o src/core.o src/symbol_table.o -L/usr/lib -lgc $(CFLAGS)
+			$(CXX) -o bin/arc src/main.o src/object.o src/reader.o src/env.o src/eval.o src/primitives.o src/core.o src/symbol_table.o -L/usr/lib -lgc $(LDFLAGS)
 
 src/main.o:		src/main.cc
 			$(CXX) -c src/main.cc -o src/main.o $(CFLAGS)
