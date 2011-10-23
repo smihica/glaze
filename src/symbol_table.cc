@@ -13,7 +13,6 @@ void symbol_table::clear()
 
 	for(it=m_table.begin(); it!=m_table.end(); it++)
 	{
-		delete &(it->first);
 		delete (it->second); // gc delete
 	}
 
