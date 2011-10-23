@@ -4,13 +4,8 @@
 LIBGC_PREFIX=
 CFLAGS = -I$(LIBGC_PREFIX)/include/gc #-DTRACER
 LDFLAGS = -L$(LIBGC_PREFIX)/lib #-DTRACER
-
-ifndef CC
-  CC = gcc
-endif
-ifndef CXX
-  CXX = g++
-endif
+CC = gcc
+CXX = g++
 
 all:			src/main.o src/object.o src/reader.o src/env.o src/eval.o src/primitives.o src/core.o src/symbol_table.o
 			$(CXX) -o bin/arc src/main.o src/object.o src/reader.o src/env.o src/eval.o src/primitives.o src/core.o src/symbol_table.o -L/usr/lib -lgc $(LDFLAGS)
