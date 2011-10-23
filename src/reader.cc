@@ -147,18 +147,18 @@ inline void reader_t::unget() {
 	m_ungetbuf_valid = true;
 }
 
-void reader_t::read_thing(char* buf, size_t size)
+size_t reader_t::read_thing(char* buf, size_t size)
 {
     size_t i = 0;
     while (i + 1 < size) {
         int c = lookahead();
         if (c == EOF) {
             buf[i] = 0;
-            return;
+            return i;
         }
         if (delimited(c)) {
             buf[i] = 0;
-            return;
+            return i;
         }
         get();
         if (c < 128) buf[i++] = c;
@@ -195,14 +195,17 @@ obj_t* reader_t::make_number(const char* buf, size_t len)
 obj_t* reader_t::read_number()
 {
     char buf[READ_NUMBER_BUFFER_SIZE];
-    read_thing(buf, sizeof(buf));
+    size_t len = read_thing(buf, sizeof(buf));
 
-	if (buf[1] == 0 && buf[0] == '.') return S_DOT;
-	if (buf[1] == 0 && (buf[0] == '+' || buf[0] == '-')) {
+    if (len == 0)
+        return S_EOF;
+
+	if (len == 1 && buf[0] == '.') return S_DOT;
+	if (len == 1 && (buf[0] == '+' || buf[0] == '-')) {
 		return make_symbol(buf);
 	}
 
-	return make_number(buf, strlen(buf));
+	return make_number(buf, len);
 }
 
 //
@@ -235,6 +238,8 @@ obj_t* reader_t::read_string()
 				}
 			}
 			int c = get();
+            if (i == 0 && c == EOF)
+                return S_EOF;
 			buf[i] = c;
 
 			if (c == '"') {
@@ -247,7 +252,6 @@ obj_t* reader_t::read_string()
 				CALLERROR("unexpected end-of-file while reading string");
 			}
 			i++;
-
 		}
 	} catch (...) {
 		if (buf != small_buf) { free(buf); }
@@ -349,30 +353,10 @@ obj_t* reader_t::make_symbol(const char* buf)
 obj_t* reader_t::read_symbol()
 {
     char buf[MAX_READ_SYMBOL_LENGTH];
-    int i = 0;
-
-    while (i + 1 < array_sizeof(buf)) {
-        int c = lookahead();
-        if (c == EOF) {
-            buf[i] = 0;
-            return make_symbol(buf);
-        }
-        if (delimited(c)) {
-            buf[i] = 0;
-            return make_symbol(buf);
-        }
-        get();
-        if (c > 0x007F) {
-			CALLERROR("invalid character %U while reading identifier", c);
-        }
-		buf[i] = c;
-		i++;
-		continue;
-    }
-
-    CALLERROR("token buffer overflow while reading identifier");
-
-	return g_obj_undef;
+    size_t len = read_thing(buf, array_sizeof(buf));
+    if (len == 0)
+        return S_EOF;
+    return make_symbol(buf);
 }
 
 //

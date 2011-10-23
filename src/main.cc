@@ -62,6 +62,8 @@ retry:
 			printf("\n");
 			g_symbol_table.print();
 #endif
+            if (obj == g_reader->S_EOF)
+                break;
 			result = g_evaluator->eval(obj, g_global_env);
 #ifdef TRACER
 			printf("last result is : ");
