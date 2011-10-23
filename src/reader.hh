@@ -11,6 +11,7 @@ public:
 	reader_t(const char* src);
 	obj_t* read_expr();
 
+	obj_t* S_EOF;
 private:
 
 	// values
@@ -39,7 +40,7 @@ private:
 	void unget();
 
 	// number
-	void read_thing(char* buf, size_t size);
+	size_t read_thing(char* buf, size_t size);
 	obj_t* make_number(const char* buf, size_t len);
 	obj_t* read_number();
 
@@ -61,7 +62,6 @@ private:
 
 	// boolean
 
-	obj_t* S_EOF;
 	obj_t* S_DOT;
 	obj_t* S_LPAREN;
 	obj_t* S_RPAREN;
