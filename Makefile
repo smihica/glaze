@@ -11,7 +11,7 @@ ifndef CXX
 endif
 
 all:			src/main.o src/object.o src/reader.o src/env.o src/eval.o src/primitives.o src/core.o src/symbol_table.o
-			$(CXX) -o bin/arc src/main.o src/object.o src/reader.o src/env.o src/eval.o src/primitives.o src/core.o src/symbol_table.o -L/usr/lib -lgc $(CFLAGS)
+			$(CXX) -o bin/mss src/main.o src/object.o src/reader.o src/env.o src/eval.o src/primitives.o src/core.o src/symbol_table.o -L/usr/lib -lgc $(CFLAGS)
 
 src/main.o:		src/main.cc
 			$(CXX) -c src/main.cc -o src/main.o $(CFLAGS)
@@ -38,4 +38,4 @@ src/symbol_table.o:	src/symbol_table.cc src/symbol_table.hh
 			$(CXX) -c src/symbol_table.cc -o src/symbol_table.o $(CFLAGS)
 
 clean:
-			rm -rf bin/arc src/main.o src/object.o src/reader.o src/eval.o src/env.o src/primitives.o src/core.o src/symbol_table.o
+			rm -rf bin/mss src/main.o src/object.o src/reader.o src/eval.o src/env.o src/primitives.o src/core.o src/symbol_table.o

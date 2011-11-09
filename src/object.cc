@@ -9,10 +9,7 @@ obj_t::obj_t() {
 	m_type = OBJECT;
 }
 
-obj_t::~obj_t() {
-	fprintf(stderr, "--- collected objtype:%d ---.\n", (int)m_type);
-	fflush(stderr);
-}
+obj_t::~obj_t() { }
 
 ssize_t obj_t::print() const { return print_proc(stdout); }
 ssize_t obj_t::print(FILE* fp) const { return print_proc(fp); }
