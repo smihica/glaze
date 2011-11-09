@@ -1,4 +1,3 @@
-#include <gc.h>
 #include "core.hh"
 #include "object.hh"
 #include "reader.hh"
@@ -22,7 +21,7 @@ int id;
 #endif
 
 int main() {
-    GC_INIT();
+	GC_INIT();
 
 	g_obj_nil   = new nil_t();
 	g_obj_t		= new t_t();

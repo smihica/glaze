@@ -16,7 +16,8 @@
 
 /* for BoehmGC */
 #define GC_DEBUG
-#include "gc_cpp.h"
+#include <gc.h>
+#include <gc_cpp.h>
 #define CHECK_LEAKS() GC_gcollect()
 
 #define array_sizeof(a) ((int)(sizeof(a)/sizeof(a[0])))

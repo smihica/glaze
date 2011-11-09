@@ -1,6 +1,12 @@
-an Arc implemantation.
+# micro-arc (temp name)
+
+micro-arc is an Arc implementation project written in C++ / Arc
+
+a lot of inspired from Gauche, ypsilon, mosh
 
 !!! NOW WORK IN PROGRESS !!!
 
-This project's goal is to make light Arc implementation in C++.
+## License
+
+BSD License
 
