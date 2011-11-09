@@ -1,7 +1,0 @@
-$ sudo apt-get install libgc-dev
-$ sudo apt-get install libgc1c2
-
-$ make
-
-bin/arc - the implementation
-

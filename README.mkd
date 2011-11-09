@@ -6,6 +6,14 @@ a lot of inspired from Gauche, ypsilon, mosh
 
 !!! NOW WORK IN PROGRESS !!!
 
+## How to build
+
+$ sudo apt-get install libgc-dev
+$ sudo apt-get install libgc1c2
+$ make
+
+-> bin/arc - the implementation
+
 ## License
 
 BSD License
