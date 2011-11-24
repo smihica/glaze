@@ -2,4 +2,5 @@ TODO
 *.o
 arc
 tmp/
+build/
 

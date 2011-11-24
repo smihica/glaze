@@ -1,16 +1,16 @@
+# !!! NOW WORK IN PROGRESS !!!
+
 # micro-arc (temp name)
 
 micro-arc is an Arc implementation project written in C++ / Arc
 
 a lot of inspired from Gauche, ypsilon, mosh
 
-!!! NOW WORK IN PROGRESS !!!
-
 ## How to build
 
-$ sudo apt-get install libgc-dev
-$ sudo apt-get install libgc1c2
+$ ./configure
 $ make
+$ sudo make install
 
 -> bin/arc - the implementation
 
