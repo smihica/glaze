@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT(arc, 0.0.1, [smihica@gmail.com])
+AC_INIT(glaze, 0.0.1, [smihica@gmail.com])
 AC_CONFIG_SRCDIR([src/core.cc])
 AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE([foreign])

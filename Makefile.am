@@ -1,6 +1,6 @@
-bin_PROGRAMS = arc
+bin_PROGRAMS = glaze
 
-ARC_CORE_SRCS =		\
+GLAZE_CORE_SRCS =	\
 src/core.cc		\
 src/core.hh		\
 src/env.cc		\
@@ -19,8 +19,8 @@ src/symbol_table.cc	\
 src/symbol_table.hh	\
 src/main.cc
 
-arc_CPPFLAGS =
+glaze_CPPFLAGS =
 
-arc_LDFLAGS = -lgc -lmpc
+glaze_LDFLAGS = -lgc -lmpc
 
-arc_SOURCES = $(ARC_CORE_SRCS)
+glaze_SOURCES = $(GLAZE_CORE_SRCS)
