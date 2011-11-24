@@ -1,20 +1,23 @@
-# !!! NOW WORK IN PROGRESS !!!
+__!!! NOW WORK IN PROGRESS !!!__
 
 # micro-arc (temp name)
 
-micro-arc is an Arc implementation project written in C++ / Arc
+micro-arc is an Arc implementation project written in C++ / Arc.  
+a lot of inspired from Paul Graham version of Arc, Gauche, ypsilon, mosh.  
 
-a lot of inspired from Gauche, ypsilon, mosh
+# What is Arc?
+
+Arc is a dialect of the Lisp programming language now under development by Paul Graham and Robert Morris.  
+<http://arclanguage.org/>
 
 ## How to build
 
-$ ./configure
-
-$ make
-
-$ sudo make install
+    ./configure
+    make
+    sudo make install
 
 ## License
 
-BSD License
-
+This software is copyright (c) Shin Aoyama 2011.  
+Permission to use it is granted under the Perl Foundations's Artistic License 2.0.  
+show COPYING to get more detail.  
