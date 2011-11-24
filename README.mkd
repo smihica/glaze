@@ -9,10 +9,10 @@ a lot of inspired from Gauche, ypsilon, mosh
 ## How to build
 
 $ ./configure
-$ make
-$ sudo make install
 
--> bin/arc - the implementation
+$ make
+
+$ sudo make install
 
 ## License
 
