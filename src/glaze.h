@@ -1,11 +1,11 @@
 #ifndef GLAZE_H_
 #define GLAZE_H_
 
-#include "core.hh"
-#include "object.hh"
-#include "env.hh"
-#include "eval.hh"
-#include "shared.hh"
+#include "core.h"
+#include "object.h"
+#include "env.h"
+#include "eval.h"
+#include "shared.h"
 
 namespace glaze {
 

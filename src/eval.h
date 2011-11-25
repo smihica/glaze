@@ -1,9 +1,9 @@
 #ifndef EVAL_H_
 #define EVAL_H_
 
-#include "core.hh"
-#include "object.hh"
-#include "shared.hh"
+#include "core.h"
+#include "object.h"
+#include "shared.h"
 
 #define READ_STRING_SMALL_BUFFER_SIZE	1024
 #define READ_NUMBER_BUFFER_SIZE			256

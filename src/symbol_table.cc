@@ -1,6 +1,6 @@
-#include "core.hh"
-#include "object.hh"
-#include "symbol_table.hh"
+#include "core.h"
+#include "object.h"
+#include "symbol_table.h"
 
 namespace glaze {
 

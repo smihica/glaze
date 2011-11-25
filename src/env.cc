@@ -1,7 +1,7 @@
-#include "core.hh"
-#include "object.hh"
-#include "shared.hh"
-#include "env.hh"
+#include "core.h"
+#include "object.h"
+#include "shared.h"
+#include "env.h"
 
 namespace glaze {
 

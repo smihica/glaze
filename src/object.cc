@@ -1,6 +1,6 @@
-#include "core.hh"
-#include "object.hh"
-#include "env.hh"
+#include "core.h"
+#include "object.h"
+#include "env.h"
 
 namespace glaze {
 

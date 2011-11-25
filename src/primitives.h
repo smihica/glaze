@@ -1,9 +1,9 @@
 #ifndef PRIMITIVES_H_
 #define PRIMITIVES_H_
 
-#include "core.hh"
-#include "object.hh"
-#include "shared.hh"
+#include "core.h"
+#include "object.h"
+#include "shared.h"
 
 namespace glaze {
 	namespace primitives {

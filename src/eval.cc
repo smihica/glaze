@@ -1,9 +1,9 @@
-#include "core.hh"
-#include "object.hh"
-#include "shared.hh"
-#include "eval.hh"
-#include "env.hh"
-#include "symbol_table.hh"
+#include "core.h"
+#include "object.h"
+#include "shared.h"
+#include "eval.h"
+#include "env.h"
+#include "symbol_table.h"
 
 namespace glaze {
 

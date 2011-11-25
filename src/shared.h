@@ -1,8 +1,8 @@
 #ifndef SHARED_H_
 #define SHARED_H_
 
-#include "core.hh"
-#include "object.hh"
+#include "core.h"
+#include "object.h"
 
 namespace glaze {
 

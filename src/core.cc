@@ -1,4 +1,4 @@
-#include "core.hh"
+#include "core.h"
 
 ssize_t fdprintf(int fd, const char *fmt, ...) {
   va_list ap;

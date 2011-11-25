@@ -2,22 +2,22 @@ bin_PROGRAMS = glaze
 
 GLAZE_CORE_SRCS =	\
 src/core.cc		\
-src/core.hh		\
+src/core.h		\
 src/object.cc		\
-src/object.hh		\
-src/shared.hh		\
+src/object.h		\
+src/shared.h		\
 src/env.cc		\
-src/env.hh		\
+src/env.h		\
 src/eval.cc		\
-src/eval.hh		\
+src/eval.h		\
 src/gc.cc		\
-src/gc.hh		\
+src/gc.h		\
 src/primitives.cc	\
-src/primitives.hh	\
+src/primitives.h	\
 src/reader.cc		\
-src/reader.hh		\
+src/reader.h		\
 src/symbol_table.cc	\
-src/symbol_table.hh	\
+src/symbol_table.h	\
 src/glaze.cc		\
 src/glaze.h		\
 src/main.cc

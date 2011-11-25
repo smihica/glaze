@@ -1,7 +1,7 @@
-#include "core.hh"
-#include "object.hh"
-#include "reader.hh"
-#include "symbol_table.hh"
+#include "core.h"
+#include "object.h"
+#include "reader.h"
+#include "symbol_table.h"
 
 #define CHAR_MAP_SYMBOL         0x01
 #define CHAR_MAP_INITIAL        0x02

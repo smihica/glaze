@@ -1,7 +1,7 @@
 #ifndef OBJECT_H_
 #define OBJECT_H_
 
-#include "core.hh"
+#include "core.h"
 
 namespace glaze {
 

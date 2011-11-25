@@ -1,10 +1,10 @@
-#include "core.hh"
-#include "object.hh"
-#include "reader.hh"
-#include "eval.hh"
-#include "env.hh"
-#include "primitives.hh"
-#include "symbol_table.hh"
+#include "core.h"
+#include "object.h"
+#include "reader.h"
+#include "eval.h"
+#include "env.h"
+#include "primitives.h"
+#include "symbol_table.h"
 
 namespace glaze {
 	namespace primitives {
