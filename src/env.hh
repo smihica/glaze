@@ -2,56 +2,63 @@
 #define ENV_H_
 
 #include "core.hh"
+#include "object.hh"
+#include "shared.hh"
 
-class frame_t :
-	public gc_cleanup /* using boehmGC */
-{
-public:
-	frame_t();
-	frame_t(std::vector<const symbol_t*>* variables, std::vector<obj_t*>* values);
-	~frame_t();
+namespace glaze {
 
-	std::vector<const symbol_t*>*	variables();
-	std::vector<obj_t*>*			values();
-	void add_binding(const symbol_t* variable, obj_t* value);
-	bool rem_binding(const symbol_t* variable);
-	bool change_binding(const symbol_t* variable, obj_t* value);
+	class frame_t :
+		public gc_cleanup /* using boehmGC */
+	{
+	public:
+		frame_t();
+		frame_t(std::vector<const symbol_t*>* variables, std::vector<obj_t*>* values);
+		~frame_t();
 
-	obj_t* lookup(const symbol_t* variable);
-	void   print();
+		std::vector<const symbol_t*>*	variables();
+		std::vector<obj_t*>*			values();
+		void add_binding(const symbol_t* variable, obj_t* value);
+		bool rem_binding(const symbol_t* variable);
+		bool change_binding(const symbol_t* variable, obj_t* value);
 
-private:
-	std::vector<const symbol_t*>* m_variables;
-	std::vector<obj_t*>* m_values;
-};
+		obj_t* lookup(const symbol_t* variable);
+		void   print();
 
-class env_t :
-	public gc_cleanup /* using boehmGC */
-{
-public:
-	env_t() {};
-	env_t(const env_t& env);
-	~env_t();
+	private:
+		std::vector<const symbol_t*>* m_variables;
+		std::vector<obj_t*>* m_values;
+	};
 
-	void extend(std::vector<const symbol_t*>* variables, std::vector<obj_t*>* values);
-	void extend(obj_t* params, obj_t* args);
-	void extend(frame_t* frame);
-	void extend();
+	class env_t :
+		public gc_cleanup /* using boehmGC */
+	{
+	public:
+		env_t(Shared* sh);
+		env_t(Shared* sh, const env_t& env);
+		~env_t();
 
-	void enclose();
+		void extend(std::vector<const symbol_t*>* variables, std::vector<obj_t*>* values);
+		void extend(obj_t* params, obj_t* args);
+		void extend(frame_t* frame);
+		void extend();
 
-	obj_t* lookup(const symbol_t* variable);
-	void set(const symbol_t* variable, obj_t* value);
-	void define(const symbol_t* variable, obj_t* value);
-	void unbind(const symbol_t* variable);
+		void enclose();
 
-	void error(const char* fname, unsigned int line, const char* fmt, ...);
+		obj_t* lookup(const symbol_t* variable);
+		void set(const symbol_t* variable, obj_t* value);
+		void define(const symbol_t* variable, obj_t* value);
+		void unbind(const symbol_t* variable);
 
-	const std::vector<frame_t*>& get_frames() const;
+		void error(const char* fname, unsigned int line, const char* fmt, ...);
 
-private:
-	std::vector<frame_t*> m_frames;
+		const std::vector<frame_t*>& get_frames() const;
 
-};
+	private:
+		std::vector<frame_t*> m_frames;
+		Shared* shared;
+
+	};
+
+}
 
 #endif

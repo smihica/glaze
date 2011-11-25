@@ -48,10 +48,11 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-am__objects_1 = glaze-core.$(OBJEXT) glaze-env.$(OBJEXT) \
-	glaze-eval.$(OBJEXT) glaze-gc.$(OBJEXT) glaze-object.$(OBJEXT) \
+am__objects_1 = glaze-core.$(OBJEXT) glaze-object.$(OBJEXT) \
+	glaze-env.$(OBJEXT) glaze-eval.$(OBJEXT) glaze-gc.$(OBJEXT) \
 	glaze-primitives.$(OBJEXT) glaze-reader.$(OBJEXT) \
-	glaze-symbol_table.$(OBJEXT) glaze-main.$(OBJEXT)
+	glaze-symbol_table.$(OBJEXT) glaze-glaze.$(OBJEXT) \
+	glaze-main.$(OBJEXT)
 am_glaze_OBJECTS = $(am__objects_1)
 glaze_OBJECTS = $(am_glaze_OBJECTS)
 glaze_LDADD = $(LDADD)
@@ -175,20 +176,23 @@ top_srcdir = @top_srcdir@
 GLAZE_CORE_SRCS = \
 src/core.cc		\
 src/core.hh		\
+src/object.cc		\
+src/object.hh		\
+src/shared.hh		\
 src/env.cc		\
 src/env.hh		\
 src/eval.cc		\
 src/eval.hh		\
 src/gc.cc		\
 src/gc.hh		\
-src/object.cc		\
-src/object.hh		\
 src/primitives.cc	\
 src/primitives.hh	\
 src/reader.cc		\
 src/reader.hh		\
 src/symbol_table.cc	\
 src/symbol_table.hh	\
+src/glaze.cc		\
+src/glaze.h		\
 src/main.cc
 
 glaze_CPPFLAGS = 
@@ -286,6 +290,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/glaze-env.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/glaze-eval.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/glaze-gc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/glaze-glaze.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/glaze-main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/glaze-object.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/glaze-primitives.Po@am__quote@
@@ -319,6 +324,20 @@ glaze-core.obj: src/core.cc
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/core.cc' object='glaze-core.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(glaze_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o glaze-core.obj `if test -f 'src/core.cc'; then $(CYGPATH_W) 'src/core.cc'; else $(CYGPATH_W) '$(srcdir)/src/core.cc'; fi`
+
+glaze-object.o: src/object.cc
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(glaze_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT glaze-object.o -MD -MP -MF $(DEPDIR)/glaze-object.Tpo -c -o glaze-object.o `test -f 'src/object.cc' || echo '$(srcdir)/'`src/object.cc
+@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/glaze-object.Tpo $(DEPDIR)/glaze-object.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/object.cc' object='glaze-object.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(glaze_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o glaze-object.o `test -f 'src/object.cc' || echo '$(srcdir)/'`src/object.cc
+
+glaze-object.obj: src/object.cc
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(glaze_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT glaze-object.obj -MD -MP -MF $(DEPDIR)/glaze-object.Tpo -c -o glaze-object.obj `if test -f 'src/object.cc'; then $(CYGPATH_W) 'src/object.cc'; else $(CYGPATH_W) '$(srcdir)/src/object.cc'; fi`
+@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/glaze-object.Tpo $(DEPDIR)/glaze-object.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/object.cc' object='glaze-object.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(glaze_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o glaze-object.obj `if test -f 'src/object.cc'; then $(CYGPATH_W) 'src/object.cc'; else $(CYGPATH_W) '$(srcdir)/src/object.cc'; fi`
 
 glaze-env.o: src/env.cc
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(glaze_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT glaze-env.o -MD -MP -MF $(DEPDIR)/glaze-env.Tpo -c -o glaze-env.o `test -f 'src/env.cc' || echo '$(srcdir)/'`src/env.cc
@@ -362,20 +381,6 @@ glaze-gc.obj: src/gc.cc
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(glaze_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o glaze-gc.obj `if test -f 'src/gc.cc'; then $(CYGPATH_W) 'src/gc.cc'; else $(CYGPATH_W) '$(srcdir)/src/gc.cc'; fi`
 
-glaze-object.o: src/object.cc
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(glaze_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT glaze-object.o -MD -MP -MF $(DEPDIR)/glaze-object.Tpo -c -o glaze-object.o `test -f 'src/object.cc' || echo '$(srcdir)/'`src/object.cc
-@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/glaze-object.Tpo $(DEPDIR)/glaze-object.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/object.cc' object='glaze-object.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(glaze_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o glaze-object.o `test -f 'src/object.cc' || echo '$(srcdir)/'`src/object.cc
-
-glaze-object.obj: src/object.cc
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(glaze_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT glaze-object.obj -MD -MP -MF $(DEPDIR)/glaze-object.Tpo -c -o glaze-object.obj `if test -f 'src/object.cc'; then $(CYGPATH_W) 'src/object.cc'; else $(CYGPATH_W) '$(srcdir)/src/object.cc'; fi`
-@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/glaze-object.Tpo $(DEPDIR)/glaze-object.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/object.cc' object='glaze-object.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(glaze_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o glaze-object.obj `if test -f 'src/object.cc'; then $(CYGPATH_W) 'src/object.cc'; else $(CYGPATH_W) '$(srcdir)/src/object.cc'; fi`
-
 glaze-primitives.o: src/primitives.cc
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(glaze_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT glaze-primitives.o -MD -MP -MF $(DEPDIR)/glaze-primitives.Tpo -c -o glaze-primitives.o `test -f 'src/primitives.cc' || echo '$(srcdir)/'`src/primitives.cc
 @am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/glaze-primitives.Tpo $(DEPDIR)/glaze-primitives.Po
@@ -417,6 +422,20 @@ glaze-symbol_table.obj: src/symbol_table.cc
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/symbol_table.cc' object='glaze-symbol_table.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(glaze_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o glaze-symbol_table.obj `if test -f 'src/symbol_table.cc'; then $(CYGPATH_W) 'src/symbol_table.cc'; else $(CYGPATH_W) '$(srcdir)/src/symbol_table.cc'; fi`
+
+glaze-glaze.o: src/glaze.cc
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(glaze_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT glaze-glaze.o -MD -MP -MF $(DEPDIR)/glaze-glaze.Tpo -c -o glaze-glaze.o `test -f 'src/glaze.cc' || echo '$(srcdir)/'`src/glaze.cc
+@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/glaze-glaze.Tpo $(DEPDIR)/glaze-glaze.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/glaze.cc' object='glaze-glaze.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(glaze_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o glaze-glaze.o `test -f 'src/glaze.cc' || echo '$(srcdir)/'`src/glaze.cc
+
+glaze-glaze.obj: src/glaze.cc
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(glaze_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT glaze-glaze.obj -MD -MP -MF $(DEPDIR)/glaze-glaze.Tpo -c -o glaze-glaze.obj `if test -f 'src/glaze.cc'; then $(CYGPATH_W) 'src/glaze.cc'; else $(CYGPATH_W) '$(srcdir)/src/glaze.cc'; fi`
+@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/glaze-glaze.Tpo $(DEPDIR)/glaze-glaze.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/glaze.cc' object='glaze-glaze.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(glaze_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o glaze-glaze.obj `if test -f 'src/glaze.cc'; then $(CYGPATH_W) 'src/glaze.cc'; else $(CYGPATH_W) '$(srcdir)/src/glaze.cc'; fi`
 
 glaze-main.o: src/main.cc
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(glaze_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT glaze-main.o -MD -MP -MF $(DEPDIR)/glaze-main.Tpo -c -o glaze-main.o `test -f 'src/main.cc' || echo '$(srcdir)/'`src/main.cc
