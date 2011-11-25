@@ -5,7 +5,7 @@ __!!! NOW WORK IN PROGRESS !!!__
 Glaze is an Arc implementation project written in C++ / Arc.  
 a lot of inspired from Paul Graham version of Arc, Gauche, ypsilon, mosh.
 
-# What is Arc?
+## What is Arc?
 
 Arc is a dialect of the Lisp programming language now under development by Paul Graham and Robert Morris.  
 [official site](http://arclanguage.org/)
