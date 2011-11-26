@@ -10,6 +10,7 @@ AC_PROG_MAKE_SET
 
 # Checks for programs.
 AC_PROG_CXX
+AC_PROG_LIBTOOL
 
 # Checks for libraries.
 # FIXME: Replace `main' with a function in `-lgc':
@@ -39,3 +40,16 @@ AC_CHECK_FUNCS([strchr strerror])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
+
+# libtool
+LT_INIT([])
+
+# define --enable-libraries option.
+# AC_ARG_ENABLE(libraries,
+#  AC_HELP_STRING([--enable-libraries], [compile and install libraries too.]),
+#  [libraries=true],
+#  [libraries=false])
+# Make enable global access.
+# AM_CONDITIONAL(WITH_LIBRARIES, test x$libraries = xtrue)
+
+
