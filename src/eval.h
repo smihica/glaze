@@ -1,5 +1,5 @@
-#ifndef EVAL_H_
-#define EVAL_H_
+#ifndef GLAZE__EVAL_H_
+#define GLAZE__EVAL_H_
 
 #include "core.h"
 #include "object.h"
@@ -73,5 +73,5 @@ namespace glaze {
 
 }
 
-#endif
+#endif // GLAZE__EVAL_H_
 

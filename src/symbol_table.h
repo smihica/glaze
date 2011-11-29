@@ -1,5 +1,5 @@
-#ifndef SYMBOL_TABLE_H_
-#define SYMBOL_TABLE_H_
+#ifndef GLAZE__SYMBOL_TABLE_H_
+#define GLAZE__SYMBOL_TABLE_H_
 
 #include <map>
 #include <string>
@@ -21,4 +21,4 @@ namespace glaze {
 
 }
 
-#endif
+#endif // GLAZE__SYMBOL_TABLE_H_

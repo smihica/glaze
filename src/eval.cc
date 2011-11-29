@@ -147,7 +147,7 @@ namespace glaze {
 	evaluator_t::list_of_values(obj_t* exps, env_t* env)
 	{
 		if (NILP(exps))
-			return shared->nil;
+			return shared->_nil;
 
 		return new cons_t( eval(CAR(exps), env),
 						   list_of_values( CDR(exps), env));
@@ -250,7 +250,7 @@ namespace glaze {
 		obj_t*	first;
 
 		rest = CDR(exp);
-		if (NILP(rest)) return shared->nil;
+		if (NILP(rest)) return shared->_nil;
 
 		index++;
 
@@ -273,7 +273,7 @@ namespace glaze {
 			rest = CDR(rest);
 		}
 
-		return shared->nil;
+		return shared->_nil;
 	}
 
 /*
@@ -484,7 +484,7 @@ namespace glaze {
 	obj_t*
 	evaluator_t::eval_sequence(obj_t* exps, env_t* env)
 	{
-		if (NILP(exps)) return shared->nil;
+		if (NILP(exps)) return shared->_nil;
 
 		obj_t* rest = CDR(exps);
 
@@ -501,7 +501,7 @@ namespace glaze {
 		obj_t* rest = CDR(exp);
 
 		if (NILP(rest))
-			return shared->nil;
+			return shared->_nil;
 
 		return eval_sequence(rest, env);
 	}
@@ -515,7 +515,7 @@ namespace glaze {
 			while (!NILP(exps)) {
 
 				if(!is_true(eval(CAR(exps), env)))
-					return shared->nil;
+					return shared->_nil;
 
 				last = CAR(exps);
 				exps = CDR(exps);
@@ -545,7 +545,7 @@ namespace glaze {
 			}
 		}
 
-		return shared->nil;
+		return shared->_nil;
 	}
 
 	inline obj_t*

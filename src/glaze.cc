@@ -14,7 +14,7 @@ namespace glaze {
 	{
 		GC_INIT();
 
-		shared.nil		= new nil_t();
+		shared._nil		= new nil_t();
 		shared.t		= new t_t();
 		shared.undef	= new undef_t();
 
@@ -24,6 +24,7 @@ namespace glaze {
 		shared.symbols		= new symbol_table();
 		shared.evaluator	= new evaluator_t(&shared);
 		shared.global_env	= new env_t(&shared);
+		shared.reader		= new reader_t(&shared);
 
 		std::vector<const symbol_t*>*	primitive_variables = new std::vector<const symbol_t*>();
 		std::vector<obj_t*>*			primitive_values	= new std::vector<obj_t*>();
@@ -31,7 +32,7 @@ namespace glaze {
 		primitives::setup_primitives(primitive_variables, primitive_values, &shared);
 
 		primitive_variables->push_back(shared.symbols->get("nil"));
-		primitive_values->push_back((obj_t*)shared.nil);
+		primitive_values->push_back((obj_t*)shared._nil);
 		primitive_variables->push_back(shared.symbols->get("t"));
 		primitive_values->push_back((obj_t*)shared.t);
 
@@ -50,29 +51,29 @@ namespace glaze {
 
 	int Interpreter::repl(FILE* fp_in, FILE* fp_out)
 	{
-		reader_t r = reader_t(&shared, fp_in);
-		return repl_iter(&r, fp_out);
+		shared.reader->set_source(fp_in);
+		return repl_iter(fp_out);
 	}
 
 	int Interpreter::repl(FILE* fp_in, int fd_out)
 	{
-		reader_t r = reader_t(&shared, fp_in);
-		return repl_iter(&r, fd_out);
+		shared.reader->set_source(fp_in);
+		return repl_iter(fd_out);
 	}
 
 	int Interpreter::repl(int fd_in, FILE* fp_out)
 	{
-		reader_t r = reader_t(&shared, fd_in);
-		return repl_iter(&r, fp_out);
+		shared.reader->set_source(fd_in);
+		return repl_iter(fp_out);
 	}
 
 	int Interpreter::repl(int fd_in, int fd_out)
 	{
-		reader_t r = reader_t(&shared, fd_in);
-		return repl_iter(&r, fd_out);
+		shared.reader->set_source(fd_in);
+		return repl_iter(fd_out);
 	}
 
-	int Interpreter::repl_iter(reader_t* reader, FILE* fp_out)
+	int Interpreter::repl_iter(FILE* fp_out)
 	{
 		obj_t* read_result;
 		obj_t* eval_result;
@@ -81,8 +82,8 @@ namespace glaze {
 		try {
 			while (1) {
 				fprintf(fp_out, "> ");
-				read_result = reader->read_expr();
-				if (read_result == reader->S_EOF) break;
+				read_result = shared.reader->read();
+				if (read_result == shared.reader->S_EOF) break;
 				eval_result = shared.evaluator->eval(read_result, shared.global_env);
 				eval_result->print(fp_out);
 				fprintf(fp_out, "\n");
@@ -96,7 +97,7 @@ namespace glaze {
 
 	}
 
-	int Interpreter::repl_iter(reader_t* reader, int fd_out){
+	int Interpreter::repl_iter(int fd_out){
 		obj_t* read_result;
 		obj_t* eval_result;
 
@@ -104,8 +105,8 @@ namespace glaze {
 		try {
 			while (1) {
 				fdprintf(fd_out, "> ");
-				read_result = reader->read_expr();
-				if (read_result == reader->S_EOF) break;
+				read_result = shared.reader->read();
+				if (read_result == shared.reader->S_EOF) break;
 				eval_result = shared.evaluator->eval(read_result, shared.global_env);
 				eval_result->print(fd_out);
 				fdprintf(fd_out, "\n");
@@ -125,17 +126,17 @@ namespace glaze {
 
 	obj_t* Interpreter::read(FILE* fp)
 	{
-		return reader_t(&shared, fp).read_expr();
+		return shared.reader->read(fp);
 	}
 
 	obj_t* Interpreter::read(int fd)
 	{
-		return reader_t(&shared, fd).read_expr();
+		return shared.reader->read(fd);
 	}
 
 	obj_t* Interpreter::read(const char* target)
 	{
-		return reader_t(&shared, target).read_expr();
+		return shared.reader->read(target);
 	}
 
 	obj_t* Interpreter::eval(obj_t* obj)

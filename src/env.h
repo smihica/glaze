@@ -1,5 +1,5 @@
-#ifndef ENV_H_
-#define ENV_H_
+#ifndef GLAZE__ENV_H_
+#define GLAZE__ENV_H_
 
 #include "core.h"
 #include "object.h"
@@ -61,4 +61,4 @@ namespace glaze {
 
 }
 
-#endif
+#endif // GLAZE__ENV_H_

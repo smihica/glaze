@@ -1,5 +1,5 @@
-#ifndef CORE_H_
-#define CORE_H_
+#ifndef GLAZE__CORE_H_
+#define GLAZE__CORE_H_
 
 #include <stdio.h>
 #include <stdint.h>
@@ -35,4 +35,4 @@ ssize_t fdprintf(int fd, const char *fmt, ...);
 #define READ_NUMBER_BUFFER_SIZE			256
 #define MAX_READ_SYMBOL_LENGTH			256
 
-#endif
+#endif // GLAZE__CORE_H_

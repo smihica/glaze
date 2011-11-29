@@ -163,9 +163,9 @@ namespace glaze {
 				do {
 					const number_t* n = (number_t*)first;
 					first = CAR(rest);
-					if (!NUMBERP(first)) return shared->nil;
+					if (!NUMBERP(first)) return shared->_nil;
 					const number_t* n2 = (number_t*)first;
-					if (*n != *n2) return shared->nil;
+					if (*n != *n2) return shared->_nil;
 					rest = CDR(rest);
 
 				} while (!NILP(rest));
@@ -178,9 +178,9 @@ namespace glaze {
 				do {
 					const string_t* s = (string_t*)first;
 					first = CAR(rest);
-					if (!STRINGP(first)) return shared->nil;
+					if (!STRINGP(first)) return shared->_nil;
 					const string_t* s2 = (string_t*)first;
-					if (*s != *s2) return shared->nil;
+					if (*s != *s2) return shared->_nil;
 					rest = CDR(rest);
 
 				} while (!NILP(rest));
@@ -213,7 +213,7 @@ namespace glaze {
 					first = CAR(rest);
 					if (!NUMBERP(first)) throw "primitive procedure '<' some arguments are invalid.";
 					const number_t* n2 = (number_t*)first;
-					if (*n >= *n2) return shared->nil;
+					if (*n >= *n2) return shared->_nil;
 					rest = CDR(rest);
 
 				} while (!NILP(rest));
@@ -246,7 +246,7 @@ namespace glaze {
 					first = CAR(rest);
 					if (!NUMBERP(first)) throw "primitive procedure '>' some arguments are invalid.";
 					const number_t* n2 = (number_t*)first;
-					if (*n <= *n2) return shared->nil;
+					if (*n <= *n2) return shared->_nil;
 					rest = CDR(rest);
 
 				} while (!NILP(rest));
@@ -274,7 +274,7 @@ namespace glaze {
 				return shared->t;
 			}
 
-			return shared->nil;
+			return shared->_nil;
 		}
 
 		obj_t* car(obj_t* args, Shared* shared)
@@ -291,7 +291,7 @@ namespace glaze {
 			}
 
 			if (NILP(first)) {
-				return shared->nil;
+				return shared->_nil;
 			}
 
 			if (CONSP(first)) {
@@ -315,7 +315,7 @@ namespace glaze {
 			}
 
 			if (NILP(first)) {
-				return shared->nil;
+				return shared->_nil;
 			}
 
 			if (CONSP(first)) {
@@ -349,14 +349,14 @@ namespace glaze {
 
 		obj_t* list(obj_t* args, Shared* shared)
 		{
-			obj_t* ret = shared->nil;
+			obj_t* ret = shared->_nil;
 
 			while (!NILP(args)) {
 				ret   = new cons_t(CAR(args), ret);
 				args  = CDR(args);
 			}
 
-			obj_t* tmp = shared->nil;
+			obj_t* tmp = shared->_nil;
 			obj_t* tmp2;
 
 			while (!NILP(ret)) {
@@ -397,13 +397,12 @@ namespace glaze {
 				throw buf;
 			}
 
-			reader_t reader = reader_t(shared, fd);
+			shared->reader->set_source(fd);
 
 			while(1) {
-				obj_t* obj = reader.read_expr();
+				obj_t* obj = shared->reader->read();
 
-				if (SYMBOLP(obj) && obj == shared->symbols->get("")) // S_EOF;
-					break;
+				if (obj == shared->reader->S_EOF) break;
 
 				shared->evaluator->eval(obj, shared->global_env);
 			}

@@ -1,15 +1,14 @@
-#ifndef GLAZE_H_
-#define GLAZE_H_
+#ifndef GLAZE__GLAZE_H_
+#define GLAZE__GLAZE_H_
 
 #include "core.h"
 #include "object.h"
 #include "env.h"
 #include "eval.h"
+#include "reader.h"
 #include "shared.h"
 
 namespace glaze {
-
-	class reader_t;
 
 	class Config {};
 
@@ -33,13 +32,14 @@ namespace glaze {
 
 		obj_t* eval(obj_t* obj);
 
-	private:
 		Shared shared;
 
-		int repl_iter(reader_t* r, FILE* fp_out);
-		int repl_iter(reader_t* r, int fd_out);
+	private:
+
+		int repl_iter(FILE* fp_out);
+		int repl_iter(int fd_out);
 	};
 
 }
 
-#endif // GLAZE_H_
+#endif // GLAZE__GLAZE_H_

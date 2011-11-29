@@ -9,7 +9,6 @@ src/gc.h		\
 src/primitives.cc	\
 src/primitives.h	\
 src/reader.cc		\
-src/reader.h		\
 src/symbol_table.cc	\
 src/symbol_table.h	\
 src/glaze.cc
@@ -19,13 +18,14 @@ src/core.h		\
 src/object.h		\
 src/env.h		\
 src/eval.h		\
+src/reader.h		\
 src/shared.h		\
 src/glaze.h
 
 lib_LTLIBRARIES = libglaze.la
 libglaze_ladir=$(includedir)/glaze
 libglaze_la_CPPFLAGS =
-libglaze_la_LDFLAGS = -lgc # -lmpc
+libglaze_la_LDFLAGS = -lgc
 libglaze_la_HEADERS = $(GLAZE_LIB_HDRS)
 libglaze_la_SOURCES = $(GLAZE_LIB_SRCS)
 

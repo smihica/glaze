@@ -1,5 +1,5 @@
-#ifndef READER_H_
-#define READER_H_
+#ifndef GLAZE__READER_H_
+#define GLAZE__READER_H_
 
 #include "core.h"
 #include "object.h"
@@ -10,12 +10,19 @@ namespace glaze {
 	class reader_t {
 	public:
 		reader_t(Shared* sh);
-		reader_t(Shared* sh, int fd);
-		reader_t(Shared* sh, FILE* fp);
-		reader_t(Shared* sh, const char* src);
-		obj_t* read_expr();
+		~reader_t();
+
+		obj_t* read();
+		obj_t* read(int fd);
+		obj_t* read(FILE* fp);
+		obj_t* read(const char* src);
+
+		void set_source(int fd);
+		void set_source(FILE* fp);
+		void set_source(const char* src);
 
 		obj_t* S_EOF;
+
 	private:
 
 		// values
@@ -35,7 +42,6 @@ namespace glaze {
 		static uint8_t s_char_map[128];
 		static void make_char_map();
 
-
 		//funcs
 		void init();
 		bool whitespace_p(int c);
@@ -44,6 +50,8 @@ namespace glaze {
 		int get();
 		int lookahead();
 		void unget();
+		obj_t* read_expr();
+		void clean();
 
 		// number
 		size_t read_thing(char* buf, size_t size);
@@ -81,4 +89,4 @@ namespace glaze {
 	};
 }
 
-#endif
+#endif // GLAZE__READER_H_

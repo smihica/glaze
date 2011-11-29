@@ -32,38 +32,72 @@ namespace glaze {
 	{
 		shared = sh;
 		init();
-		m_fp = stdin;
 	}
 
-	reader_t::reader_t(Shared* sh, int fd)
+	reader_t::~reader_t()
 	{
-		shared = sh;
-		init();
+		// nothing to do.
+	}
+
+	obj_t* reader_t::read()
+	{
+		clean();
+		return read_expr();
+	}
+
+	obj_t* reader_t::read(int fd)
+	{
+		set_source(fd);
+		return read_expr();
+	}
+
+	obj_t* reader_t::read(FILE* fp)
+	{
+		set_source(fp);
+		return read_expr();
+	}
+
+	obj_t* reader_t::read(const char* src)
+	{
+		set_source(src);
+		return read_expr();
+	}
+
+	void reader_t::set_source(int fd)
+	{
+		clean();
+
 		m_fd = fd;
+		m_fp = NULL;
+		m_src = NULL;
 	}
 
-	reader_t::reader_t(Shared* sh, FILE* fp)
+	void reader_t::set_source(FILE* fp)
 	{
-		shared = sh;
-		init();
+		clean();
+
+		m_fd = -1;
 		m_fp = fp;
+		m_src = NULL;
 	}
 
-	reader_t::reader_t(Shared* sh, const char* src)
+	void reader_t::set_source(const char* src)
 	{
-		shared = sh;
-		init();
+		clean();
+
+		m_fd = -1;
+		m_fp = NULL;
 		m_src = src;
 	}
 
-	void reader_t::init() {
-		m_fd = -1;
-		m_fp = NULL;
-		m_src = NULL;
-
+	void reader_t::clean()
+	{
 		m_ungetbuf = EOF;
 		m_ungetbuf_valid = false;
 		m_read = 0;
+	}
+
+	void reader_t::init() {
 
 		make_char_map();
 
@@ -80,6 +114,11 @@ namespace glaze {
 		mksymbol(S_UNQUOTE, "unquote");
 		mksymbol(S_UNQUOTE_SPLICING, "unquote-splicing");
 
+		m_fd = -1;
+		m_fp = NULL;
+		m_src = NULL;
+
+		clean();
 	}
 
 
@@ -108,7 +147,7 @@ namespace glaze {
 			int res;
 		get_top:
 			if (m_fd != -1) {
-				res = read(m_fd, &c, 1);
+				res = ::read(m_fd, &c, 1);
 			} else if (m_fp != NULL) {
 				res = fread(&c, sizeof(char), 1, m_fp);
 			} else if (m_src != NULL) {
@@ -265,7 +304,7 @@ namespace glaze {
 // list
 //
 	inline obj_t* reader_t::make_list_2items(obj_t* first, obj_t* second) {
-		return new cons_t(first, (new cons_t(second, shared->nil)));
+		return new cons_t(first, (new cons_t(second, shared->_nil)));
 	}
 
 	obj_t* reader_t::reverse_list(obj_t* lst, obj_t* tail)
@@ -283,7 +322,7 @@ namespace glaze {
 
 	obj_t* reader_t::read_list(bool bracketed)
 	{
-		obj_t* lst = shared->nil;
+		obj_t* lst = shared->_nil;
 		obj_t* token;
 
 		while ((token = read_token()) != S_EOF) {
@@ -291,14 +330,14 @@ namespace glaze {
 				if (bracketed) {
 					CALLERROR("bracketed list terminated by parenthesis");
 				}
-				lst = reverse_list(lst, shared->nil);
+				lst = reverse_list(lst, shared->_nil);
 				return lst;
 			}
 			if (token == S_RBRACK) {
 				if (!bracketed) {
 					CALLERROR("parenthesized list terminated by bracket");
 				}
-				lst = reverse_list(lst, shared->nil);
+				lst = reverse_list(lst, shared->_nil);
 				return lst;
 			}
 			if (token == S_LPAREN) {
@@ -310,7 +349,7 @@ namespace glaze {
 				continue;
 			}
 			if (token == S_DOT) {
-				if (lst == shared->nil) {
+				if (lst == shared->_nil) {
 					CALLERROR("misplaced dot('.') while reading list");
 				}
 				obj_t* rest = read_expr();

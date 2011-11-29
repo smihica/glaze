@@ -1,5 +1,5 @@
-#ifndef PRIMITIVES_H_
-#define PRIMITIVES_H_
+#ifndef GLAZE__PRIMITIVES_H_
+#define GLAZE__PRIMITIVES_H_
 
 #include "core.h"
 #include "object.h"
@@ -27,4 +27,4 @@ namespace glaze {
 	}
 }
 
-#endif
+#endif // GLAZE__PRIMITIVES_H_

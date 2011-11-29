@@ -1,9 +1,9 @@
-#ifndef GC_H_
-#define GC_H_
+#ifndef GLAZE__GC_H_
+#define GLAZE__GC_H_
 
 #include "core.h"
 
 // atode
 
-#endif
+#endif // GLAZE__GC_H_
 

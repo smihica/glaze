@@ -1,5 +1,5 @@
-#ifndef OBJECT_H_
-#define OBJECT_H_
+#ifndef GLAZE__OBJECT_H_
+#define GLAZE__OBJECT_H_
 
 #include "core.h"
 
@@ -333,4 +333,4 @@ namespace glaze {
 
 }
 
-#endif
+#endif // GLAZE__OBJECT_H_
