@@ -3,6 +3,8 @@
 
 int main(int argc, char* argv[]) {
 
+	printf( "Glaze-arc version 0.0.0 compiled at %s %s\n", __DATE__, __TIME__ );
+
 	glaze::Config conf;
 
 	glaze::Interpreter impl = glaze::Interpreter(&conf);

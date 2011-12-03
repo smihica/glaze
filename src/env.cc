@@ -1,6 +1,5 @@
 #include "core.h"
 #include "object.h"
-#include "shared.h"
 #include "env.h"
 
 namespace glaze {
@@ -135,31 +134,19 @@ namespace glaze {
 
 
 // env
-	env_t::env_t(Shared* sh)
+	env_t::env_t()
 	{
-		shared = sh;
 	}
 
-	env_t::env_t(Shared* sh, const env_t& env)
+	env_t::env_t(const env_t& env)
 	{
 		// use copy constructor;
 		m_frames = env.get_frames();
-		shared = sh;
 	}
 
 	env_t::~env_t()
 	{
-/*
-  std::vector<frame_t*>::reverse_iterator it;
-  frame_t* f;
-
-  for(it = m_frames.rbegin(); it != m_frames.rend(); it++)
-  {
-  f = (*it);
-  delete f;
-  }
-*/
-		m_frames.clear();
+		// m_frames.clear();
 	}
 
 	const std::vector<frame_t*>&
@@ -285,9 +272,17 @@ namespace glaze {
 		char buf[1024];
 		variable->print(buf, 1024);
 
+		/* dbg print.
+		for(it = m_frames.rbegin(); it != m_frames.rend(); it++)
+		{
+			f = (*it);
+			f->print();
+		}
+		*/
+
 		CALLERROR("unbound variable. : LOOKUP %s", buf);
 
-		return shared->undef;
+		return NULL;
 	}
 
 	void

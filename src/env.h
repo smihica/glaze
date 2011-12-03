@@ -33,8 +33,8 @@ namespace glaze {
 		public gc_cleanup /* using boehmGC */
 	{
 	public:
-		env_t(Shared* sh);
-		env_t(Shared* sh, const env_t& env);
+		env_t();
+		env_t(const env_t& env);
 		~env_t();
 
 		void extend(std::vector<const symbol_t*>* variables, std::vector<obj_t*>* values);

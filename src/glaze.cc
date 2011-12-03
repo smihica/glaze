@@ -22,8 +22,12 @@ namespace glaze {
 		// Because g_symbol_table is refered in
 		// the reader and the evaluator and the env.
 		shared.symbols		= new symbol_table();
+		shared.global_env	= new env_t();
+
+		//fprintf(stdout, "env_t ptr (%p).\n", shared.global_env);
+		//fflush(stdout);
+
 		shared.evaluator	= new evaluator_t(&shared);
-		shared.global_env	= new env_t(&shared);
 		shared.reader		= new reader_t(&shared);
 
 		std::vector<const symbol_t*>*	primitive_variables = new std::vector<const symbol_t*>();
