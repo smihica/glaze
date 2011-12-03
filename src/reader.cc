@@ -41,7 +41,6 @@ namespace glaze {
 
 	obj_t* reader_t::read()
 	{
-		clean();
 		return read_expr();
 	}
 
