@@ -12,11 +12,12 @@ namespace glaze {
 	void symbol_table::clear()
 	{
 		std::map<std::string, const symbol_t*>::iterator it;
-
+/*
 		for(it=m_table.begin(); it!=m_table.end(); it++)
 		{
 			delete (it->second); // gc delete
 		}
+*/
 
 		m_table.clear();
 	}
@@ -25,13 +26,12 @@ namespace glaze {
 	symbol_table::get(const char* name)
 	{
 		const symbol_t* sym;
-		std::string* buf = new std::string(name);
+		std::string buf = std::string(name);
 
-		std::pair<std::map<std::string, const symbol_t*>::iterator, bool> pib = m_table.insert(std::pair<std::string, const symbol_t*>(*buf, NULL));
+		std::pair<std::map<std::string, const symbol_t*>::iterator, bool> pib = m_table.insert(std::pair<std::string, const symbol_t*>(buf, NULL));
 
 		if (!pib.second) {
 			sym = pib.first->second;
-			delete buf;
 
 		} else {
 			sym = new symbol_t(name, strlen(name));
