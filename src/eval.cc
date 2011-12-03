@@ -51,7 +51,7 @@ namespace glaze {
 			}
 
 			char buf[1024];
-			exp->print(buf, 1024);
+			top->print(buf, 1024);
 
 			CALLERROR("attempt call non-procedure -- EVAL %s", buf);
 		}
