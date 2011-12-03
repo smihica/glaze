@@ -22,8 +22,10 @@ namespace glaze {
 		obj_t* list(obj_t* args, Shared* shared);
 		obj_t* load(obj_t* args, Shared* shared);
 
-		void setup_primitives(std::vector<const symbol_t*>* variables, std::vector<obj_t*>* values, Shared* shared);
-
+		void setup_primitives(
+			std::vector<const symbol_t*, traceable_allocator<const symbol_t*> >* variables,
+			std::vector<obj_t*, traceable_allocator<obj_t*> >* values,
+			Shared* shared);
 	}
 }
 

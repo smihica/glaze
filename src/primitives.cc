@@ -412,7 +412,10 @@ namespace glaze {
 			return shared->undef;
 		}
 
-		void setup_primitives(std::vector<const symbol_t*>* variables, std::vector<obj_t*>* values, Shared* shared)
+		void setup_primitives(
+			std::vector<const symbol_t*, traceable_allocator<const symbol_t*> >* variables,
+			std::vector<obj_t*, traceable_allocator<obj_t*> >* values,
+			Shared* shared)
 		{
 			variables->push_back(shared->symbols->get("+"));
 			values->push_back(new subr_t("+", (void*)plus));

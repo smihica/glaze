@@ -30,8 +30,11 @@ namespace glaze {
 		shared.evaluator	= new evaluator_t(&shared);
 		shared.reader		= new reader_t(&shared);
 
-		std::vector<const symbol_t*>*	primitive_variables = new std::vector<const symbol_t*>();
-		std::vector<obj_t*>*			primitive_values	= new std::vector<obj_t*>();
+		std::vector<const symbol_t*, traceable_allocator<const symbol_t*> >* primitive_variables =
+			new std::vector<const symbol_t*, traceable_allocator<const symbol_t*> >();
+
+		std::vector<obj_t*, traceable_allocator<obj_t*> >* primitive_values	=
+			new std::vector<obj_t*, traceable_allocator<obj_t*> >();
 
 		primitives::setup_primitives(primitive_variables, primitive_values, &shared);
 

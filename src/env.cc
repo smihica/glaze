@@ -7,11 +7,12 @@ namespace glaze {
 // frame
 	frame_t::frame_t()
 	{
-		m_variables	= new std::vector<const symbol_t*>();
-		m_values	= new std::vector<obj_t*>();
+		m_variables	= new std::vector<const symbol_t*, traceable_allocator<const symbol_t*> >();
+		m_values	= new std::vector<obj_t*, traceable_allocator<obj_t*> >();
 	}
 
-	frame_t::frame_t(std::vector<const symbol_t*>* variables, std::vector<obj_t*>* values)
+	frame_t::frame_t(std::vector<const symbol_t*, traceable_allocator<const symbol_t*> >* variables,
+					 std::vector<obj_t*, traceable_allocator<obj_t*> >* values)
 	{
 		m_variables	= variables;
 		m_values	= values;
@@ -25,13 +26,13 @@ namespace glaze {
 		delete m_values;
 	}
 
-	std::vector<const symbol_t*>*
+	std::vector<const symbol_t*, traceable_allocator<const symbol_t*> >*
 	frame_t::variables()
 	{
 		return m_variables;
 	}
 
-	std::vector<obj_t*>*
+	std::vector<obj_t*, traceable_allocator<obj_t*> >*
 	frame_t::values()
 	{
 		return m_values;
@@ -49,8 +50,8 @@ namespace glaze {
 	frame_t::rem_binding(const symbol_t* variable)
 	{
 
-		std::vector<const symbol_t*>::iterator var_it;
-		std::vector<obj_t*>::iterator val_it;
+		std::vector<const symbol_t*, traceable_allocator<const symbol_t*> >::iterator var_it;
+		std::vector<obj_t*, traceable_allocator<obj_t*> >::iterator val_it;
 
 		for( var_it = m_variables->begin(),
 				 val_it = m_values->begin();
@@ -74,8 +75,8 @@ namespace glaze {
 	bool
 	frame_t::change_binding(const symbol_t* variable, obj_t* value)
 	{
-		std::vector<const symbol_t*>::iterator var_it;
-		std::vector<obj_t*>::iterator val_it;
+		std::vector<const symbol_t*, traceable_allocator<const symbol_t*> >::iterator var_it;
+		std::vector<obj_t*, traceable_allocator<obj_t*> >::iterator val_it;
 
 		for( var_it = m_variables->begin(),
 				 val_it = m_values->begin();
@@ -111,8 +112,8 @@ namespace glaze {
 	void
 	frame_t::print()
 	{
-		std::vector<const symbol_t*>::iterator var_it;
-		std::vector<obj_t*>::iterator val_it;
+		std::vector<const symbol_t*, traceable_allocator<const symbol_t*> >::iterator var_it;
+		std::vector<obj_t*, traceable_allocator<obj_t*> >::iterator val_it;
 
 		for( var_it = m_variables->begin(),
 				 val_it = m_values->begin();
@@ -149,14 +150,15 @@ namespace glaze {
 		// m_frames.clear();
 	}
 
-	const std::vector<frame_t*>&
+	const std::vector<frame_t*, traceable_allocator<frame_t*> >&
 	env_t::get_frames() const
 	{
 		return m_frames;
 	}
 
 	void
-	env_t::extend(std::vector<const symbol_t*>* variables, std::vector<obj_t*>* values)
+	env_t::extend(std::vector<const symbol_t*, traceable_allocator<const symbol_t*> >* variables,
+				  std::vector<obj_t*, traceable_allocator<obj_t*> >* values)
 	{
 		size_t vars_len = variables->size();
 		size_t vals_len = values->size();
@@ -176,8 +178,12 @@ namespace glaze {
 	void
 	env_t::extend(obj_t* params, obj_t* args)
 	{
-		std::vector<const symbol_t*>*	vars = new std::vector<const symbol_t*>();
-		std::vector<obj_t*>*			vals = new std::vector<obj_t*>();
+		std::vector<const symbol_t*, traceable_allocator<const symbol_t*> >* vars =
+			new std::vector<const symbol_t*, traceable_allocator<const symbol_t*> >();
+
+		std::vector<obj_t*, traceable_allocator<obj_t*> >* vals =
+			new std::vector<obj_t*, traceable_allocator<obj_t*> >();
+
 		obj_t* var;
 		obj_t* val;
 
@@ -250,7 +256,6 @@ namespace glaze {
 
 		frame_t* frame = m_frames.back();
 		m_frames.pop_back();
-		// delete frame;
 
 		return;
 	}
@@ -258,7 +263,7 @@ namespace glaze {
 	obj_t*
 	env_t::lookup(const symbol_t* variable)
 	{
-		std::vector<frame_t*>::reverse_iterator it;
+		std::vector<frame_t*, traceable_allocator<frame_t*> >::reverse_iterator it;
 		frame_t* f;
 		obj_t* obj;
 
@@ -288,7 +293,7 @@ namespace glaze {
 	void
 	env_t::set(const symbol_t* variable, obj_t* value)
 	{
-		std::vector<frame_t*>::reverse_iterator it;
+		std::vector<frame_t*, traceable_allocator<frame_t*> >::reverse_iterator it;
 
 		for(it = m_frames.rbegin(); it != m_frames.rend(); it++)
 		{
@@ -305,7 +310,7 @@ namespace glaze {
 	void
 	env_t::unbind(const symbol_t* variable)
 	{
-		std::vector<frame_t*>::reverse_iterator it;
+		std::vector<frame_t*, traceable_allocator<frame_t*> >::reverse_iterator it;
 
 		for(it = m_frames.rbegin(); it != m_frames.rend(); it++)
 		{
