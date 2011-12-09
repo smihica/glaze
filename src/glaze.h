@@ -10,35 +10,35 @@
 
 namespace glaze {
 
-	class Config {};
+    class Config {};
 
-	class Interpreter
-	{
-	public:
+    class Interpreter
+    {
+    public:
 
-		Interpreter(Config* conf);
-		virtual ~Interpreter();
+        Interpreter(Config* conf);
+        virtual ~Interpreter();
 
-		int repl();
-		int repl(FILE* fp_in, FILE* fp_out);
-		int repl(FILE* fp_in, int fd_out);
-		int repl(int fd_in, FILE* fp_out);
-		int repl(int fd_in, int fd_out);
+        int repl();
+        int repl(FILE* fp_in, FILE* fp_out);
+        int repl(FILE* fp_in, int fd_out);
+        int repl(int fd_in, FILE* fp_out);
+        int repl(int fd_in, int fd_out);
 
-		obj_t* read();
-		obj_t* read(FILE* fp);
-		obj_t* read(int fd);
-		obj_t* read(const char* target);
+        obj_t* read();
+        obj_t* read(FILE* fp);
+        obj_t* read(int fd);
+        obj_t* read(const char* target);
 
-		obj_t* eval(obj_t* obj);
+        obj_t* eval(obj_t* obj);
 
-		Shared shared;
+        Shared shared;
 
-	private:
+    private:
 
-		int repl_iter(FILE* fp_out);
-		int repl_iter(int fd_out);
-	};
+        int repl_iter(FILE* fp_out);
+        int repl_iter(int fd_out);
+    };
 
 }
 

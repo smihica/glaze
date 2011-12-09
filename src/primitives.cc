@@ -7,455 +7,456 @@
 #include "symbol_table.h"
 
 namespace glaze {
-	namespace primitives {
 
-		obj_t* plus(obj_t* args, Shared* shared)
-		{
-			if (NILP(args)) {
-				int64_t z = 0;
-				return new number_t(z);
-			}
+    namespace primitives {
 
-			if(!CONSP(args)) throw "invalid arg.";
+        obj_t* plus(obj_t* args, Shared* shared)
+        {
+            if (NILP(args)) {
+                int64_t z = 0;
+                return new number_t(z);
+            }
 
-			obj_t* first = CAR(args);
-			obj_t* rest  = CDR(args);
+            if(!CONSP(args)) throw "invalid arg.";
 
-			if (NUMBERP(first)) {
-				const number_t* n = (number_t*)first;
-				number_t* ret = new number_t(*n);
+            obj_t* first = CAR(args);
+            obj_t* rest  = CDR(args);
 
-				while (!NILP(rest)) {
+            if (NUMBERP(first)) {
+                const number_t* n = (number_t*)first;
+                number_t* ret = new number_t(*n);
 
-					first = CAR(rest);
+                while (!NILP(rest)) {
 
-					if (!NUMBERP(first)) throw "primitive procedure '+' some arguments are invalid.";
+                    first = CAR(rest);
 
-					*ret += *((number_t*)first);
+                    if (!NUMBERP(first)) throw "primitive procedure '+' some arguments are invalid.";
 
-					rest = CDR(rest);
-				}
-				return (obj_t*)ret;
-			}
+                    *ret += *((number_t*)first);
 
-			if (STRINGP(first)){
-				const char* src = ((string_t*)first)->c_str();
-				string_t* ret = new string_t(src, strlen(src));
+                    rest = CDR(rest);
+                }
+                return (obj_t*)ret;
+            }
 
-				while (!NILP(rest)) {
-					first = CAR(rest);
+            if (STRINGP(first)){
+                const char* src = ((string_t*)first)->c_str();
+                string_t* ret = new string_t(src, strlen(src));
 
-					if (!STRINGP(first)) throw "primitive procedure '+' some arguments are invalid.";
+                while (!NILP(rest)) {
+                    first = CAR(rest);
 
-					string_t* p = (string_t*)first;
-					*ret += *p;
+                    if (!STRINGP(first)) throw "primitive procedure '+' some arguments are invalid.";
 
-					rest = CDR(rest);
-				}
+                    string_t* p = (string_t*)first;
+                    *ret += *p;
 
-				return (obj_t*)ret;
-			}
+                    rest = CDR(rest);
+                }
 
-			throw "primitive procedure '+' some arguments are invalid.";
-		}
+                return (obj_t*)ret;
+            }
 
-		obj_t* minus(obj_t* args, Shared* shared)
-		{
-			if (NILP(args)) {
-				int64_t z = 0;
-				return new number_t(z);
-			}
+            throw "primitive procedure '+' some arguments are invalid.";
+        }
 
-			obj_t* first = CAR(args);
-			obj_t* rest  = CDR(args);
+        obj_t* minus(obj_t* args, Shared* shared)
+        {
+            if (NILP(args)) {
+                int64_t z = 0;
+                return new number_t(z);
+            }
 
-			if (NUMBERP(first)) {
-				const number_t* n = (number_t*)first;
-				number_t* ret = new number_t(*n);
-				while (!NILP(rest)) {
-					first = CAR(rest);
+            obj_t* first = CAR(args);
+            obj_t* rest  = CDR(args);
 
-					if (!NUMBERP(first)) throw "primitive procedure '-' some arguments are invalid.";
+            if (NUMBERP(first)) {
+                const number_t* n = (number_t*)first;
+                number_t* ret = new number_t(*n);
+                while (!NILP(rest)) {
+                    first = CAR(rest);
 
-					*ret -= *((number_t*)first);
+                    if (!NUMBERP(first)) throw "primitive procedure '-' some arguments are invalid.";
 
-					rest = CDR(rest);
-				}
-				return (obj_t*)ret;
+                    *ret -= *((number_t*)first);
 
-			}
+                    rest = CDR(rest);
+                }
+                return (obj_t*)ret;
 
-			throw "primitive procedure '-' some arguments are invalid.";
-		}
+            }
 
-		obj_t* multiple(obj_t* args, Shared* shared)
-		{
-			if (NILP(args)) {
-				int64_t o = 1;
-				return new number_t(o);
-			}
+            throw "primitive procedure '-' some arguments are invalid.";
+        }
 
-			obj_t* first = CAR(args);
-			obj_t* rest  = CDR(args);
+        obj_t* multiple(obj_t* args, Shared* shared)
+        {
+            if (NILP(args)) {
+                int64_t o = 1;
+                return new number_t(o);
+            }
 
-			if (NUMBERP(first)) {
-				const number_t* n = (number_t*)first;
-				number_t* ret = new number_t(*n);
-				while (!NILP(rest)) {
-					first = CAR(rest);
+            obj_t* first = CAR(args);
+            obj_t* rest  = CDR(args);
 
-					if (!NUMBERP(first)) throw "primitive procedure '*' some arguments are invalid.";
+            if (NUMBERP(first)) {
+                const number_t* n = (number_t*)first;
+                number_t* ret = new number_t(*n);
+                while (!NILP(rest)) {
+                    first = CAR(rest);
 
-					*ret *= *((number_t*)first);
+                    if (!NUMBERP(first)) throw "primitive procedure '*' some arguments are invalid.";
 
-					rest = CDR(rest);
-				}
-				return (obj_t*)ret;
-			}
+                    *ret *= *((number_t*)first);
 
-			throw "primitive procedure '*' some arguments are invalid.";
-		}
+                    rest = CDR(rest);
+                }
+                return (obj_t*)ret;
+            }
 
-		obj_t* devide(obj_t* args, Shared* shared)
-		{
-			if (NILP(args)) {
-				throw "primitive procedure '/' requires at least one argument.";
-			}
+            throw "primitive procedure '*' some arguments are invalid.";
+        }
 
-			obj_t* first = CAR(args);
-			obj_t* rest  = CDR(args);
+        obj_t* devide(obj_t* args, Shared* shared)
+        {
+            if (NILP(args)) {
+                throw "primitive procedure '/' requires at least one argument.";
+            }
 
-			if (NUMBERP(first)) {
-				const number_t* n = (number_t*)first;
-				number_t* ret = new number_t(*n);
-				while (!NILP(rest)) {
-					first = CAR(rest);
+            obj_t* first = CAR(args);
+            obj_t* rest  = CDR(args);
 
-					if (!NUMBERP(first)) throw "primitive procedure '/' some arguments are invalid.";
+            if (NUMBERP(first)) {
+                const number_t* n = (number_t*)first;
+                number_t* ret = new number_t(*n);
+                while (!NILP(rest)) {
+                    first = CAR(rest);
 
-					*ret /= *((number_t*)first);
+                    if (!NUMBERP(first)) throw "primitive procedure '/' some arguments are invalid.";
 
-					rest = CDR(rest);
-				}
-				return (obj_t*)ret;
-			}
+                    *ret /= *((number_t*)first);
 
-			throw "primitive procedure '/' some arguments are invalid.";
-		}
+                    rest = CDR(rest);
+                }
+                return (obj_t*)ret;
+            }
 
-		obj_t* equal(obj_t* args, Shared* shared)
-		{
-			if (NILP(args)) {
-				return shared->t;
-			}
+            throw "primitive procedure '/' some arguments are invalid.";
+        }
 
-			if(!CONSP(args)) throw "invalid arg.";
+        obj_t* equal(obj_t* args, Shared* shared)
+        {
+            if (NILP(args)) {
+                return shared->t;
+            }
 
-			obj_t* first = CAR(args);
-			obj_t* rest  = CDR(args);
+            if(!CONSP(args)) throw "invalid arg.";
 
-			if (NILP(rest)) {
-				return shared->t;
-			}
+            obj_t* first = CAR(args);
+            obj_t* rest  = CDR(args);
 
-			if (NUMBERP(first)) {
+            if (NILP(rest)) {
+                return shared->t;
+            }
 
-				do {
-					const number_t* n = (number_t*)first;
-					first = CAR(rest);
-					if (!NUMBERP(first)) return shared->_nil;
-					const number_t* n2 = (number_t*)first;
-					if (*n != *n2) return shared->_nil;
-					rest = CDR(rest);
+            if (NUMBERP(first)) {
 
-				} while (!NILP(rest));
+                do {
+                    const number_t* n = (number_t*)first;
+                    first = CAR(rest);
+                    if (!NUMBERP(first)) return shared->_nil;
+                    const number_t* n2 = (number_t*)first;
+                    if (*n != *n2) return shared->_nil;
+                    rest = CDR(rest);
 
-				return shared->t;
-			}
+                } while (!NILP(rest));
 
-			if (STRINGP(first)){
+                return shared->t;
+            }
 
-				do {
-					const string_t* s = (string_t*)first;
-					first = CAR(rest);
-					if (!STRINGP(first)) return shared->_nil;
-					const string_t* s2 = (string_t*)first;
-					if (*s != *s2) return shared->_nil;
-					rest = CDR(rest);
+            if (STRINGP(first)){
 
-				} while (!NILP(rest));
+                do {
+                    const string_t* s = (string_t*)first;
+                    first = CAR(rest);
+                    if (!STRINGP(first)) return shared->_nil;
+                    const string_t* s2 = (string_t*)first;
+                    if (*s != *s2) return shared->_nil;
+                    rest = CDR(rest);
 
-				return shared->t;
-			}
+                } while (!NILP(rest));
 
-			throw "primitive procedure '+' some arguments are invalid.";
-		}
+                return shared->t;
+            }
 
-		obj_t* smaller_than(obj_t* args, Shared* shared)
-		{
-			if (NILP(args)) {
-				return shared->t;
-			}
+            throw "primitive procedure '+' some arguments are invalid.";
+        }
 
-			if(!CONSP(args)) throw "invalid arg.";
+        obj_t* smaller_than(obj_t* args, Shared* shared)
+        {
+            if (NILP(args)) {
+                return shared->t;
+            }
 
-			obj_t* first = CAR(args);
-			obj_t* rest  = CDR(args);
+            if(!CONSP(args)) throw "invalid arg.";
 
-			if (NILP(rest)) {
-				return shared->t;
-			}
+            obj_t* first = CAR(args);
+            obj_t* rest  = CDR(args);
 
-			if (NUMBERP(first)) {
+            if (NILP(rest)) {
+                return shared->t;
+            }
 
-				do {
-					const number_t* n = (number_t*)first;
-					first = CAR(rest);
-					if (!NUMBERP(first)) throw "primitive procedure '<' some arguments are invalid.";
-					const number_t* n2 = (number_t*)first;
-					if (*n >= *n2) return shared->_nil;
-					rest = CDR(rest);
+            if (NUMBERP(first)) {
 
-				} while (!NILP(rest));
+                do {
+                    const number_t* n = (number_t*)first;
+                    first = CAR(rest);
+                    if (!NUMBERP(first)) throw "primitive procedure '<' some arguments are invalid.";
+                    const number_t* n2 = (number_t*)first;
+                    if (*n >= *n2) return shared->_nil;
+                    rest = CDR(rest);
 
-				return shared->t;
-			}
+                } while (!NILP(rest));
 
-			throw "primitive procedure '<' some arguments are invalid.";
-		}
+                return shared->t;
+            }
 
-		obj_t* bigger_than(obj_t* args, Shared* shared)
-		{
-			if (NILP(args)) {
-				return shared->t;
-			}
+            throw "primitive procedure '<' some arguments are invalid.";
+        }
 
-			if(!CONSP(args)) throw "invalid arg.";
+        obj_t* bigger_than(obj_t* args, Shared* shared)
+        {
+            if (NILP(args)) {
+                return shared->t;
+            }
 
-			obj_t* first = CAR(args);
-			obj_t* rest  = CDR(args);
+            if(!CONSP(args)) throw "invalid arg.";
 
-			if (NILP(rest)) {
-				return shared->t;
-			}
+            obj_t* first = CAR(args);
+            obj_t* rest  = CDR(args);
 
-			if (NUMBERP(first)) {
+            if (NILP(rest)) {
+                return shared->t;
+            }
 
-				do {
-					const number_t* n = (number_t*)first;
-					first = CAR(rest);
-					if (!NUMBERP(first)) throw "primitive procedure '>' some arguments are invalid.";
-					const number_t* n2 = (number_t*)first;
-					if (*n <= *n2) return shared->_nil;
-					rest = CDR(rest);
+            if (NUMBERP(first)) {
 
-				} while (!NILP(rest));
+                do {
+                    const number_t* n = (number_t*)first;
+                    first = CAR(rest);
+                    if (!NUMBERP(first)) throw "primitive procedure '>' some arguments are invalid.";
+                    const number_t* n2 = (number_t*)first;
+                    if (*n <= *n2) return shared->_nil;
+                    rest = CDR(rest);
 
-				return shared->t;
-			}
+                } while (!NILP(rest));
 
-			throw "primitive procedure '>' some arguments are invalid.";
-		}
+                return shared->t;
+            }
 
-		obj_t* no(obj_t* args, Shared* shared)
-		{
-			if (NILP(args)) {
-				throw "wrong number of arguments 'no' requires 1";
-			}
+            throw "primitive procedure '>' some arguments are invalid.";
+        }
 
-			obj_t* first = CAR(args);
-			obj_t* rest  = CDR(args);
+        obj_t* no(obj_t* args, Shared* shared)
+        {
+            if (NILP(args)) {
+                throw "wrong number of arguments 'no' requires 1";
+            }
 
-			if (!NILP(rest)) {
-				throw "wrong number of arguments 'no' requires 1";
-			}
+            obj_t* first = CAR(args);
+            obj_t* rest  = CDR(args);
 
-			if (NILP(first)) {
-				return shared->t;
-			}
+            if (!NILP(rest)) {
+                throw "wrong number of arguments 'no' requires 1";
+            }
 
-			return shared->_nil;
-		}
+            if (NILP(first)) {
+                return shared->t;
+            }
 
-		obj_t* car(obj_t* args, Shared* shared)
-		{
-			if (NILP(args)) {
-				throw "wrong number of arguments 'car' requires 1";
-			}
+            return shared->_nil;
+        }
 
-			obj_t* first = CAR(args);
-			obj_t* rest  = CDR(args);
+        obj_t* car(obj_t* args, Shared* shared)
+        {
+            if (NILP(args)) {
+                throw "wrong number of arguments 'car' requires 1";
+            }
 
-			if (!NILP(rest)) {
-				throw "wrong number of arguments 'car' requires 1";
-			}
+            obj_t* first = CAR(args);
+            obj_t* rest  = CDR(args);
 
-			if (NILP(first)) {
-				return shared->_nil;
-			}
+            if (!NILP(rest)) {
+                throw "wrong number of arguments 'car' requires 1";
+            }
 
-			if (CONSP(first)) {
-				return CAR(first);
-			}
+            if (NILP(first)) {
+                return shared->_nil;
+            }
 
-			throw "'car' the argument is invalid.";
-		}
+            if (CONSP(first)) {
+                return CAR(first);
+            }
 
-		obj_t* cdr(obj_t* args, Shared* shared)
-		{
-			if (NILP(args)) {
-				throw "wrong number of arguments. 'cdr' expects 1";
-			}
+            throw "'car' the argument is invalid.";
+        }
 
-			obj_t* first = CAR(args);
-			obj_t* rest  = CDR(args);
+        obj_t* cdr(obj_t* args, Shared* shared)
+        {
+            if (NILP(args)) {
+                throw "wrong number of arguments. 'cdr' expects 1";
+            }
 
-			if (!NILP(rest)) {
-				throw "wrong number of arguments. 'cdr' expects 1";
-			}
+            obj_t* first = CAR(args);
+            obj_t* rest  = CDR(args);
 
-			if (NILP(first)) {
-				return shared->_nil;
-			}
+            if (!NILP(rest)) {
+                throw "wrong number of arguments. 'cdr' expects 1";
+            }
 
-			if (CONSP(first)) {
-				return CDR(first);
-			}
+            if (NILP(first)) {
+                return shared->_nil;
+            }
 
-			throw "'cdr' the argument is invalid.";
-		}
+            if (CONSP(first)) {
+                return CDR(first);
+            }
 
-		obj_t* cons(obj_t* args, Shared* shared)
-		{
-			if (NILP(args)) {
-				throw "wrong number of arguments. 'cons' expects 2, given 0.";
-			}
+            throw "'cdr' the argument is invalid.";
+        }
 
-			obj_t* first	= CAR(args);
-			obj_t* rest		= CDR(args);
+        obj_t* cons(obj_t* args, Shared* shared)
+        {
+            if (NILP(args)) {
+                throw "wrong number of arguments. 'cons' expects 2, given 0.";
+            }
 
-			if (!NILP(rest)) {
-				obj_t* rest2 = CDR(rest);
+            obj_t* first    = CAR(args);
+            obj_t* rest     = CDR(args);
 
-				if (!NILP(rest2)) {
-					throw "wrong number of arguments. 'cons' expects 2, given 3 or more.";
-				}
+            if (!NILP(rest)) {
+                obj_t* rest2 = CDR(rest);
 
-				return (new cons_t(first, CAR(rest)));
-			}
+                if (!NILP(rest2)) {
+                    throw "wrong number of arguments. 'cons' expects 2, given 3 or more.";
+                }
 
-			throw "wrong number of arguments. 'cons' expects 2, given 1.";
-		}
+                return (new cons_t(first, CAR(rest)));
+            }
 
-		obj_t* list(obj_t* args, Shared* shared)
-		{
-			obj_t* ret = shared->_nil;
+            throw "wrong number of arguments. 'cons' expects 2, given 1.";
+        }
 
-			while (!NILP(args)) {
-				ret   = new cons_t(CAR(args), ret);
-				args  = CDR(args);
-			}
+        obj_t* list(obj_t* args, Shared* shared)
+        {
+            obj_t* ret = shared->_nil;
 
-			obj_t* tmp = shared->_nil;
-			obj_t* tmp2;
+            while (!NILP(args)) {
+                ret   = new cons_t(CAR(args), ret);
+                args  = CDR(args);
+            }
 
-			while (!NILP(ret)) {
-				tmp2 = CDR(ret);
-				((cons_t*)ret)->set_cdr(tmp);
-				tmp = ret;
-				ret = tmp2;
-			}
-			ret = tmp;
+            obj_t* tmp = shared->_nil;
+            obj_t* tmp2;
 
-			return ret;
-		}
+            while (!NILP(ret)) {
+                tmp2 = CDR(ret);
+                ((cons_t*)ret)->set_cdr(tmp);
+                tmp = ret;
+                ret = tmp2;
+            }
+            ret = tmp;
 
-		obj_t* load(obj_t* args, Shared* shared)
-		{
-			if (NILP(args)) {
-				throw "wrong number of arguments 'load' requires 1";
-			}
+            return ret;
+        }
 
-			obj_t* first = CAR(args);
-			obj_t* rest  = CDR(args);
+        obj_t* load(obj_t* args, Shared* shared)
+        {
+            if (NILP(args)) {
+                throw "wrong number of arguments 'load' requires 1";
+            }
 
-			if (!NILP(rest)) {
-				throw "wrong number of arguments 'load' requires 1";
-			}
+            obj_t* first = CAR(args);
+            obj_t* rest  = CDR(args);
 
-			if(!STRINGP(first))
-				throw "wrong type of argument 'load' requires string";
+            if (!NILP(rest)) {
+                throw "wrong number of arguments 'load' requires 1";
+            }
 
-			const char* fname = ((const string_t*)first)->c_str();
+            if(!STRINGP(first))
+                throw "wrong type of argument 'load' requires string";
 
-			int fd = open(fname, O_RDONLY);
-			if ( fd < 0 ){
-				// TODO !!! memory leak !!!!
-				char* buf = (char*)malloc(64); *buf = 0;
-				snprintf(buf, 64, "the file couldn't open (%s)", strerror(errno));
+            const char* fname = ((const string_t*)first)->c_str();
 
-				throw buf;
-			}
+            int fd = open(fname, O_RDONLY);
+            if ( fd < 0 ){
+                // TODO !!! memory leak !!!!
+                char* buf = (char*)malloc(64); *buf = 0;
+                snprintf(buf, 64, "the file couldn't open (%s)", strerror(errno));
 
-			shared->reader->set_source(fd);
+                throw buf;
+            }
 
-			while(1) {
-				obj_t* obj = shared->reader->read();
+            shared->reader->set_source(fd);
 
-				if (obj == shared->reader->S_EOF) break;
+            while(1) {
+                obj_t* obj = shared->reader->read();
 
-				shared->evaluator->eval(obj, shared->global_env);
-			}
+                if (obj == shared->reader->S_EOF) break;
 
-			close(fd);
+                shared->evaluator->eval(obj, shared->global_env);
+            }
 
-			return shared->undef;
-		}
+            close(fd);
 
-		void setup_primitives( std::vector<const symbol_t*>* variables,
+            return shared->undef;
+        }
+
+        void setup_primitives( std::vector<const symbol_t*>* variables,
                                std::vector<obj_t*>* values,
                                Shared* shared)
-		{
-			variables->push_back(shared->symbols->get("+"));
-			values->push_back(new subr_t("+", (void*)plus));
+        {
+            variables->push_back(shared->symbols->get("+"));
+            values->push_back(new subr_t("+", (void*)plus));
 
-			variables->push_back(shared->symbols->get("-"));
-			values->push_back(new subr_t("-", (void*)minus));
+            variables->push_back(shared->symbols->get("-"));
+            values->push_back(new subr_t("-", (void*)minus));
 
-			variables->push_back(shared->symbols->get("*"));
-			values->push_back(new subr_t("*", (void*)multiple));
+            variables->push_back(shared->symbols->get("*"));
+            values->push_back(new subr_t("*", (void*)multiple));
 
-			variables->push_back(shared->symbols->get("/"));
-			values->push_back(new subr_t("/", (void*)devide));
+            variables->push_back(shared->symbols->get("/"));
+            values->push_back(new subr_t("/", (void*)devide));
 
-			variables->push_back(shared->symbols->get("is"));
-			values->push_back(new subr_t("is", (void*)equal));
+            variables->push_back(shared->symbols->get("is"));
+            values->push_back(new subr_t("is", (void*)equal));
 
-			variables->push_back(shared->symbols->get("<"));
-			values->push_back(new subr_t("<", (void*)smaller_than));
+            variables->push_back(shared->symbols->get("<"));
+            values->push_back(new subr_t("<", (void*)smaller_than));
 
-			variables->push_back(shared->symbols->get(">"));
-			values->push_back(new subr_t(">", (void*)bigger_than));
+            variables->push_back(shared->symbols->get(">"));
+            values->push_back(new subr_t(">", (void*)bigger_than));
 
-			variables->push_back(shared->symbols->get("no"));
-			values->push_back(new subr_t("no", (void*)no));
+            variables->push_back(shared->symbols->get("no"));
+            values->push_back(new subr_t("no", (void*)no));
 
-			variables->push_back(shared->symbols->get("car"));
-			values->push_back(new subr_t("car", (void*)car));
+            variables->push_back(shared->symbols->get("car"));
+            values->push_back(new subr_t("car", (void*)car));
 
-			variables->push_back(shared->symbols->get("cdr"));
-			values->push_back(new subr_t("cdr", (void*)cdr));
+            variables->push_back(shared->symbols->get("cdr"));
+            values->push_back(new subr_t("cdr", (void*)cdr));
 
-			variables->push_back(shared->symbols->get("cons"));
-			values->push_back(new subr_t("cons", (void*)cons));
+            variables->push_back(shared->symbols->get("cons"));
+            values->push_back(new subr_t("cons", (void*)cons));
 
-			variables->push_back(shared->symbols->get("list"));
-			values->push_back(new subr_t("list", (void*)list));
+            variables->push_back(shared->symbols->get("list"));
+            values->push_back(new subr_t("list", (void*)list));
 
-			variables->push_back(shared->symbols->get("load"));
-			values->push_back(new subr_t("load", (void*)load));
+            variables->push_back(shared->symbols->get("load"));
+            values->push_back(new subr_t("load", (void*)load));
 
-			return;
-		}
-	}
+            return;
+        }
+    }
 }

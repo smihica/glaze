@@ -7,274 +7,274 @@
 
 namespace glaze {
 
-	evaluator_t::evaluator_t(Shared* sh)
-	{
-		shared = sh;
+    evaluator_t::evaluator_t(Shared* sh)
+    {
+        shared = sh;
 
-		special_symbols[0] = shared->symbols->get("quote");
-		special_symbols[1] = shared->symbols->get("assign");
-		special_symbols[2] = shared->symbols->get("if");
-		special_symbols[3] = shared->symbols->get("fn");
-		special_symbols[4] = shared->symbols->get("def");
-		special_symbols[5] = shared->symbols->get("%nameless_mac");
-		special_symbols[6] = shared->symbols->get("mac");
-		special_symbols[7] = shared->symbols->get("do");
-		special_symbols[8] = shared->symbols->get("and");
-		special_symbols[9] = shared->symbols->get("or");
-	}
+        special_symbols[0] = shared->symbols->get("quote");
+        special_symbols[1] = shared->symbols->get("assign");
+        special_symbols[2] = shared->symbols->get("if");
+        special_symbols[3] = shared->symbols->get("fn");
+        special_symbols[4] = shared->symbols->get("def");
+        special_symbols[5] = shared->symbols->get("%nameless_mac");
+        special_symbols[6] = shared->symbols->get("mac");
+        special_symbols[7] = shared->symbols->get("do");
+        special_symbols[8] = shared->symbols->get("and");
+        special_symbols[9] = shared->symbols->get("or");
+    }
 
-	obj_t*
-	evaluator_t::eval(obj_t* exp, env_t* env) {
-		evaluator_t::special_t flag;
+    obj_t*
+    evaluator_t::eval(obj_t* exp, env_t* env) {
+        evaluator_t::special_t flag;
 
-		if (is_self_evaluating(exp))
-			return exp;
+        if (is_self_evaluating(exp))
+            return exp;
 
-		else if (is_variable(exp)) {
-			return env->lookup((const symbol_t*)exp);
-		}
+        else if (is_variable(exp)) {
+            return env->lookup((const symbol_t*)exp);
+        }
 
-		else if ((flag = is_special(exp)) != evaluator_t::NOT_SPECIAL)
-			return eval_special(flag, exp, env);
+        else if ((flag = is_special(exp)) != evaluator_t::NOT_SPECIAL)
+            return eval_special(flag, exp, env);
 
-		else if (is_application(exp)) {
-			obj_t* top = (eval(CAR(exp), env));
+        else if (is_application(exp)) {
+            obj_t* top = (eval(CAR(exp), env));
 
-			if (FUNCTIONP(top)) {
-				return apply((function_t*)top,
-							 list_of_values(CDR(exp), env));
-			}
+            if (FUNCTIONP(top)) {
+                return apply((function_t*)top,
+                             list_of_values(CDR(exp), env));
+            }
 
-			if (MACROP(top)) {
-				obj_t* expr = expand_macro((macro_t*)top, CDR(exp));
-				return eval(expr, env);
-			}
+            if (MACROP(top)) {
+                obj_t* expr = expand_macro((macro_t*)top, CDR(exp));
+                return eval(expr, env);
+            }
 
-			char buf[1024];
-			top->print(buf, 1024);
+            char buf[1024];
+            top->print(buf, 1024);
 
-			CALLERROR("attempt call non-procedure -- EVAL %s", buf);
-		}
-		else
-		{
-			char buf[1024];
-			exp->print(buf, 1024);
+            CALLERROR("attempt call non-procedure -- EVAL %s", buf);
+        }
+        else
+        {
+            char buf[1024];
+            exp->print(buf, 1024);
 
-			CALLERROR("unknown expression type -- EVAL %s", buf);
-		}
+            CALLERROR("unknown expression type -- EVAL %s", buf);
+        }
 
-		return NULL;
-	}
+        return NULL;
+    }
 
-	inline bool
-	evaluator_t::is_self_evaluating(const obj_t* exp)
-	{
-		return (NUMBERP(exp) || STRINGP(exp));
-	}
-
-
-	inline bool
-	evaluator_t::is_variable(const obj_t* exp)
-	{
-		return SYMBOLP(exp);
-	}
-
-	evaluator_t::special_t
-	evaluator_t::is_special(const obj_t* exp)
-	{
-
-		if (!CONSP(exp)){
-			char buf[1024];
-			exp->print(buf, 1024);
-			CALLERROR("unknown expression type -- IS_SPECIAL %s", buf);
-		}
-
-		obj_t* top = CAR(exp);
-
-		if(!(SYMBOLP(top))) return NOT_SPECIAL;
-
-		const symbol_t* s = (symbol_t*)top;
-
-		if ( s == special_symbols[0] )
-			return QUOTED;
-
-		else if ( s == special_symbols[1] )
-			return ASSIGNMENT;
-
-		else if ( s == special_symbols[2] )
-			return IF_STAT;
-
-		else if ( s == special_symbols[3] )
-			return FN_STAT;
-
-		else if ( s == special_symbols[4] )
-			return DEF_STAT;
-
-		else if ( s == special_symbols[5] )
-			return NLMAC_STAT;
-
-		else if ( s == special_symbols[6] )
-			return MAC_STAT;
-
-		else if ( s == special_symbols[7] )
-			return DO_STAT;
-
-		else if ( s == special_symbols[8] )
-			return AND_STAT;
-
-		else if ( s == special_symbols[9] )
-			return OR_STAT;
-
-		else
-			return NOT_SPECIAL;
-
-	}
-
-	inline bool
-	evaluator_t::is_true(const obj_t* exp)
-	{
-		return !NILP(exp);
-	}
-
-	inline bool
-	evaluator_t::is_application(const obj_t* exp)
-	{
-		return CONSP(exp);
-	}
+    inline bool
+    evaluator_t::is_self_evaluating(const obj_t* exp)
+    {
+        return (NUMBERP(exp) || STRINGP(exp));
+    }
 
 
-	obj_t*
-	evaluator_t::list_of_values(obj_t* exps, env_t* env)
-	{
-		if (NILP(exps))
-			return shared->_nil;
+    inline bool
+    evaluator_t::is_variable(const obj_t* exp)
+    {
+        return SYMBOLP(exp);
+    }
 
-		return new cons_t( eval(CAR(exps), env),
-						   list_of_values( CDR(exps), env));
-	}
+    evaluator_t::special_t
+    evaluator_t::is_special(const obj_t* exp)
+    {
+
+        if (!CONSP(exp)){
+            char buf[1024];
+            exp->print(buf, 1024);
+            CALLERROR("unknown expression type -- IS_SPECIAL %s", buf);
+        }
+
+        obj_t* top = CAR(exp);
+
+        if(!(SYMBOLP(top))) return NOT_SPECIAL;
+
+        const symbol_t* s = (symbol_t*)top;
+
+        if ( s == special_symbols[0] )
+            return QUOTED;
+
+        else if ( s == special_symbols[1] )
+            return ASSIGNMENT;
+
+        else if ( s == special_symbols[2] )
+            return IF_STAT;
+
+        else if ( s == special_symbols[3] )
+            return FN_STAT;
+
+        else if ( s == special_symbols[4] )
+            return DEF_STAT;
+
+        else if ( s == special_symbols[5] )
+            return NLMAC_STAT;
+
+        else if ( s == special_symbols[6] )
+            return MAC_STAT;
+
+        else if ( s == special_symbols[7] )
+            return DO_STAT;
+
+        else if ( s == special_symbols[8] )
+            return AND_STAT;
+
+        else if ( s == special_symbols[9] )
+            return OR_STAT;
+
+        else
+            return NOT_SPECIAL;
+
+    }
+
+    inline bool
+    evaluator_t::is_true(const obj_t* exp)
+    {
+        return !NILP(exp);
+    }
+
+    inline bool
+    evaluator_t::is_application(const obj_t* exp)
+    {
+        return CONSP(exp);
+    }
 
 
-	obj_t*
-	evaluator_t::eval_special(evaluator_t::special_t flag, obj_t* exp, env_t* env)
-	{
-		switch(flag) {
-		case QUOTED:
-			return eval_quote(exp, env);
-		case ASSIGNMENT:
-			return eval_assignment(exp, env);
-		case IF_STAT:
-			return eval_if(exp, env);
-		case FN_STAT:
-			return eval_fn(exp, env);
-		case DEF_STAT:
-			return eval_def(exp, env);
-		case NLMAC_STAT:
-			return eval_nameless_mac(exp, env);
-		case MAC_STAT:
-			return eval_mac(exp, env);
-		case DO_STAT:
-			return eval_do(exp, env);
-		case AND_STAT:
-			return eval_and(exp, env);
-		case OR_STAT:
-			return eval_or(exp, env);
-		default: {
-			char buf[1024];
-			exp->print(buf, 1024);
+    obj_t*
+    evaluator_t::list_of_values(obj_t* exps, env_t* env)
+    {
+        if (NILP(exps))
+            return shared->_nil;
 
-			CALLERROR("This is not a special expression -- EVAL_SPECIAL %s", buf);
-		}
-		}
+        return new cons_t( eval(CAR(exps), env),
+                           list_of_values( CDR(exps), env));
+    }
 
-		return shared->undef;
-	}
 
-	inline obj_t*
-	evaluator_t::eval_quote(obj_t* exp, env_t* env)
-	{
-		if (NILP(CDR(exp))) {
-			char buf[1024];
-			exp->print(buf, 1024);
+    obj_t*
+    evaluator_t::eval_special(evaluator_t::special_t flag, obj_t* exp, env_t* env)
+    {
+        switch(flag) {
+        case QUOTED:
+            return eval_quote(exp, env);
+        case ASSIGNMENT:
+            return eval_assignment(exp, env);
+        case IF_STAT:
+            return eval_if(exp, env);
+        case FN_STAT:
+            return eval_fn(exp, env);
+        case DEF_STAT:
+            return eval_def(exp, env);
+        case NLMAC_STAT:
+            return eval_nameless_mac(exp, env);
+        case MAC_STAT:
+            return eval_mac(exp, env);
+        case DO_STAT:
+            return eval_do(exp, env);
+        case AND_STAT:
+            return eval_and(exp, env);
+        case OR_STAT:
+            return eval_or(exp, env);
+        default: {
+            char buf[1024];
+            exp->print(buf, 1024);
 
-			CALLERROR("error in quote! : Expects argument of type cadrable value -- EVAL_QUOTE %s", buf);
-		}
+            CALLERROR("This is not a special expression -- EVAL_SPECIAL %s", buf);
+        }
+        }
 
-		return CADR(exp);
-	}
+        return shared->undef;
+    }
 
-	obj_t*
-	evaluator_t::eval_assignment(obj_t* exp, env_t* env)
-	{
-		obj_t* rest;
-		obj_t* second;
-		obj_t* third;
-		obj_t* ret;
-		const symbol_t* sym;
+    inline obj_t*
+    evaluator_t::eval_quote(obj_t* exp, env_t* env)
+    {
+        if (NILP(CDR(exp))) {
+            char buf[1024];
+            exp->print(buf, 1024);
 
-		rest = CDR(exp);
-		if (NILP(rest)) goto error_eval_assignment;
+            CALLERROR("error in quote! : Expects argument of type cadrable value -- EVAL_QUOTE %s", buf);
+        }
 
-		second =  CADR(exp);
-		if (NILP(second) || (!is_variable(second))) goto error_eval_assignment;
+        return CADR(exp);
+    }
 
-		third = CADDR(exp);
-		if (NILP(third)) goto error_eval_assignment;
+    obj_t*
+    evaluator_t::eval_assignment(obj_t* exp, env_t* env)
+    {
+        obj_t* rest;
+        obj_t* second;
+        obj_t* third;
+        obj_t* ret;
+        const symbol_t* sym;
 
-		ret	= eval(third, env);
-		sym = (const symbol_t*)second;
+        rest = CDR(exp);
+        if (NILP(rest)) goto error_eval_assignment;
 
-		if (CLOSUREP(ret))
-			((closure_t*)ret)->set_name(sym->name());
-		else if (MACROP(ret))
-			((macro_t*)ret)->set_name(sym->name());
+        second =  CADR(exp);
+        if (NILP(second) || (!is_variable(second))) goto error_eval_assignment;
 
-		env->define(sym, ret);
+        third = CADDR(exp);
+        if (NILP(third)) goto error_eval_assignment;
 
-		return ret;
+        ret = eval(third, env);
+        sym = (const symbol_t*)second;
 
-	error_eval_assignment:
-		char buf[1024];
-		exp->print(buf, 1024);
+        if (CLOSUREP(ret))
+            ((closure_t*)ret)->set_name(sym->name());
+        else if (MACROP(ret))
+            ((macro_t*)ret)->set_name(sym->name());
 
-		CALLERROR("error in set! : Expected variable and single expression -- EVAL_ASSIGNMENT %s", buf);
+        env->define(sym, ret);
 
-		return shared->undef;
-	}
+        return ret;
 
-	obj_t*
-	evaluator_t::eval_if(obj_t* exp, env_t* env)
-	{
-		size_t	index = 0;
-		bool	skip = true;
-		obj_t*	rest;
-		obj_t*	first;
+    error_eval_assignment:
+        char buf[1024];
+        exp->print(buf, 1024);
 
-		rest = CDR(exp);
-		if (NILP(rest)) return shared->_nil;
+        CALLERROR("error in set! : Expected variable and single expression -- EVAL_ASSIGNMENT %s", buf);
 
-		index++;
+        return shared->undef;
+    }
 
-		while (!NILP(rest)) {
-			first = CAR(rest);
-			if ((index % 2) != 0) {
+    obj_t*
+    evaluator_t::eval_if(obj_t* exp, env_t* env)
+    {
+        size_t  index = 0;
+        bool    skip = true;
+        obj_t*  rest;
+        obj_t*  first;
 
-				if (NILP(CDR(rest))) // last item. this is not a condition.
-					return eval(first, env);
+        rest = CDR(exp);
+        if (NILP(rest)) return shared->_nil;
 
-				// condition
-				if (is_true(eval(first, env))) {
-					skip = false;
-				}
-			} else {
-				if (!skip) return eval(first, env);
-			}
+        index++;
 
-			index++;
-			rest = CDR(rest);
-		}
+        while (!NILP(rest)) {
+            first = CAR(rest);
+            if ((index % 2) != 0) {
 
-		return shared->_nil;
-	}
+                if (NILP(CDR(rest))) // last item. this is not a condition.
+                    return eval(first, env);
+
+                // condition
+                if (is_true(eval(first, env))) {
+                    skip = false;
+                }
+            } else {
+                if (!skip) return eval(first, env);
+            }
+
+            index++;
+            rest = CDR(rest);
+        }
+
+        return shared->_nil;
+    }
 
 /*
   (%nameless_mac)
@@ -282,35 +282,35 @@ namespace glaze {
   (%nameless_mac a b)
   (%nameless_mac "ab" c)
 */
-	obj_t*
-	evaluator_t::eval_nameless_mac(obj_t* exp, env_t* env)
-	{
-		obj_t* second;
-		obj_t* rest;
-		macro_t* ret;
+    obj_t*
+    evaluator_t::eval_nameless_mac(obj_t* exp, env_t* env)
+    {
+        obj_t* second;
+        obj_t* rest;
+        macro_t* ret;
 
-		if (NILP(CDR(exp))) goto error_eval_nameless_mac;
+        if (NILP(CDR(exp))) goto error_eval_nameless_mac;
 
-		second = CADR(exp);
-		if (NILP(second)) goto error_eval_nameless_mac;
-		rest = CDDR(exp);
+        second = CADR(exp);
+        if (NILP(second)) goto error_eval_nameless_mac;
+        rest = CDDR(exp);
 
-		ret = new macro_t(second, rest, env);
+        ret = new macro_t(second, rest, env);
 
-		char pos[32];
-		snprintf(pos, 31, "#%p", ret);
-		ret->set_name(pos);
+        char pos[32];
+        snprintf(pos, 31, "#%p", ret);
+        ret->set_name(pos);
 
-		return ret;
+        return ret;
 
-	error_eval_nameless_mac:
-		char buf[1024];
-		exp->print(buf, 1024);
+    error_eval_nameless_mac:
+        char buf[1024];
+        exp->print(buf, 1024);
 
-		CALLERROR("error in nameless_mac : Expected formals and body -- EVAL_NAMELESS_MAC %s", buf);
+        CALLERROR("error in nameless_mac : Expected formals and body -- EVAL_NAMELESS_MAC %s", buf);
 
-		return shared->undef;
-	}
+        return shared->undef;
+    }
 
 /*
   (mac)
@@ -319,64 +319,64 @@ namespace glaze {
   (mac a b)
   (mac "ab" c)
 */
-	obj_t*
-	evaluator_t::eval_mac(obj_t* exp, env_t* env)
-	{
-		obj_t* second;
-		obj_t* third;
-		obj_t* rest;
-		obj_t* definition_value;
-		obj_t* obj;
+    obj_t*
+    evaluator_t::eval_mac(obj_t* exp, env_t* env)
+    {
+        obj_t* second;
+        obj_t* third;
+        obj_t* rest;
+        obj_t* definition_value;
+        obj_t* obj;
 
-		const symbol_t* definition_variable;
+        const symbol_t* definition_variable;
 
-		if (NILP(CDR(exp))) goto error_eval_mac1;
+        if (NILP(CDR(exp))) goto error_eval_mac1;
 
-		second = CADR(exp);
-		if (NILP(second)) goto error_eval_mac1;
+        second = CADR(exp);
+        if (NILP(second)) goto error_eval_mac1;
 
-		if (NILP(CDDR(exp))) goto error_eval_mac1;
+        if (NILP(CDDR(exp))) goto error_eval_mac1;
 
-		third = CADDR(exp);
-		if (!(SYMBOLP(third) || CONSP(third))) {
-			char buf[1024];
-			exp->print(buf, 1024);
+        third = CADDR(exp);
+        if (!(SYMBOLP(third) || CONSP(third))) {
+            char buf[1024];
+            exp->print(buf, 1024);
 
-			CALLERROR("mac: expected symbol or cons for second clause -- EVAL_MAC %s", buf);
-		}
+            CALLERROR("mac: expected symbol or cons for second clause -- EVAL_MAC %s", buf);
+        }
 
-		rest = CDDDR(exp);
+        rest = CDDDR(exp);
 
-		if (!is_variable(second)) goto error_eval_mac2;
+        if (!is_variable(second)) goto error_eval_mac2;
 
-		definition_variable = (const symbol_t*)second;
-		definition_value = new cons_t(const_cast<symbol_t*>(shared->symbols->get("%nameless_mac")),
-									  new cons_t(third, rest));
+        definition_variable = (const symbol_t*)second;
+        definition_value = new cons_t(const_cast<symbol_t*>(shared->symbols->get("%nameless_mac")),
+                                      new cons_t(third, rest));
 
-		obj = eval(definition_value, env);
+        obj = eval(definition_value, env);
 
-		if (MACROP(obj)) {
-			((macro_t*)obj)->set_name(definition_variable->name());
-		}
+        if (MACROP(obj)) {
+            ((macro_t*)obj)->set_name(definition_variable->name());
+        }
 
-		env->define(definition_variable, obj);
+        env->define(definition_variable, obj);
 
-		return obj;
+        return obj;
 
-	error_eval_mac1:
-		char buf1[1024];
-		exp->print(buf1, 1024);
+    error_eval_mac1:
+        char buf1[1024];
+        exp->print(buf1, 1024);
 
-		CALLERROR("mac: expected at least 2 arguments -- EVAL_MAC %s", buf1);
+        CALLERROR("mac: expected at least 2 arguments -- EVAL_MAC %s", buf1);
 
-	error_eval_mac2:
-		char buf2[1024];
-		exp->print(buf2, 1024);
+    error_eval_mac2:
+        char buf2[1024];
+        exp->print(buf2, 1024);
 
-		CALLERROR("mac: expected symbol for first clause -- EVAL_MAC %s", buf2);
+        CALLERROR("mac: expected symbol for first clause -- EVAL_MAC %s", buf2);
 
-		return shared->undef;
-	}
+        return shared->undef;
+    }
 
 /*
   (fn)
@@ -384,36 +384,36 @@ namespace glaze {
   (fn a b)
   (fn "ab" c)
 */
-	obj_t*
-	evaluator_t::eval_fn(obj_t* exp, env_t* env)
-	{
-		obj_t* second;
-		obj_t* rest;
-		closure_t* ret;
+    obj_t*
+    evaluator_t::eval_fn(obj_t* exp, env_t* env)
+    {
+        obj_t* second;
+        obj_t* rest;
+        closure_t* ret;
 
-		if (NILP(CDR(exp))) goto error_eval_fn;
+        if (NILP(CDR(exp))) goto error_eval_fn;
 
-		second = CADR(exp);
-		if (NILP(second)) goto error_eval_fn;
-		rest = CDDR(exp);
-//	if (NILP(rest))  goto error_eval_fn; // disable empty fn.
+        second = CADR(exp);
+        if (NILP(second)) goto error_eval_fn;
+        rest = CDDR(exp);
+//  if (NILP(rest))  goto error_eval_fn; // disable empty fn.
 
-		ret = new closure_t(second, rest, env);
+        ret = new closure_t(second, rest, env);
 
-		char pos[32];
-		snprintf(pos, 31, "#%p", ret);
-		ret->set_name(pos);
+        char pos[32];
+        snprintf(pos, 31, "#%p", ret);
+        ret->set_name(pos);
 
-		return ret;
+        return ret;
 
-	error_eval_fn:
-		char buf[1024];
-		exp->print(buf, 1024);
+    error_eval_fn:
+        char buf[1024];
+        exp->print(buf, 1024);
 
-		CALLERROR("error in fn : Expected formals and body -- EVAL_FN %s", buf);
+        CALLERROR("error in fn : Expected formals and body -- EVAL_FN %s", buf);
 
-		return shared->undef;
-	}
+        return shared->undef;
+    }
 
 /*
   (def)   -> error
@@ -422,221 +422,221 @@ namespace glaze {
   (def a b)
   (def "ab" c)
 */
-	obj_t*
-	evaluator_t::eval_def(obj_t* exp, env_t* env)
-	{
-		obj_t* second;
-		obj_t* third;
-		obj_t* rest;
-		obj_t* definition_value;
-		obj_t* obj;
-		const symbol_t* definition_variable;
+    obj_t*
+    evaluator_t::eval_def(obj_t* exp, env_t* env)
+    {
+        obj_t* second;
+        obj_t* third;
+        obj_t* rest;
+        obj_t* definition_value;
+        obj_t* obj;
+        const symbol_t* definition_variable;
 
-		if (NILP(CDR(exp))) goto error_eval_def1;
+        if (NILP(CDR(exp))) goto error_eval_def1;
 
-		second = CADR(exp);
-		if (NILP(second)) goto error_eval_def1;
+        second = CADR(exp);
+        if (NILP(second)) goto error_eval_def1;
 
-		if (NILP(CDDR(exp))) goto error_eval_def1;
+        if (NILP(CDDR(exp))) goto error_eval_def1;
 
-		third = CADDR(exp);
-		if (!(SYMBOLP(third) || CONSP(third))) {
-			char buf[1024];
-			exp->print(buf, 1024);
+        third = CADDR(exp);
+        if (!(SYMBOLP(third) || CONSP(third))) {
+            char buf[1024];
+            exp->print(buf, 1024);
 
-			CALLERROR("def: expected symbol or cons for second clause -- EVAL_DEF %s", buf);
+            CALLERROR("def: expected symbol or cons for second clause -- EVAL_DEF %s", buf);
 
-		}
+        }
 
-		rest = CDDDR(exp);
+        rest = CDDDR(exp);
 
-		if (!is_variable(second)) goto error_eval_def2;
+        if (!is_variable(second)) goto error_eval_def2;
 
-		definition_variable = (const symbol_t*)second;
-		definition_value = new cons_t(const_cast<symbol_t*>(shared->symbols->get("fn")),
-									  new cons_t(third, rest));
+        definition_variable = (const symbol_t*)second;
+        definition_value = new cons_t(const_cast<symbol_t*>(shared->symbols->get("fn")),
+                                      new cons_t(third, rest));
 
-		obj = eval(definition_value, env);
+        obj = eval(definition_value, env);
 
-		if (CLOSUREP(obj)) {
-			((closure_t*)obj)->set_name(definition_variable->name());
-		}
+        if (CLOSUREP(obj)) {
+            ((closure_t*)obj)->set_name(definition_variable->name());
+        }
 
-		env->define(definition_variable, obj);
+        env->define(definition_variable, obj);
 
-		return obj;
+        return obj;
 
-	error_eval_def1:
-		char buf1[1024];
-		exp->print(buf1, 1024);
+    error_eval_def1:
+        char buf1[1024];
+        exp->print(buf1, 1024);
 
-		CALLERROR("def: expected at least 2 arguments -- EVAL_DEF %s", buf1);
+        CALLERROR("def: expected at least 2 arguments -- EVAL_DEF %s", buf1);
 
-	error_eval_def2:
-		char buf2[1024];
-		exp->print(buf2, 1024);
+    error_eval_def2:
+        char buf2[1024];
+        exp->print(buf2, 1024);
 
-		CALLERROR("def: expected symbol for first clause -- EVAL_DEF %s", buf2);
+        CALLERROR("def: expected symbol for first clause -- EVAL_DEF %s", buf2);
 
-		return shared->undef;
-	}
+        return shared->undef;
+    }
 
-	obj_t*
-	evaluator_t::eval_sequence(obj_t* exps, env_t* env)
-	{
-		if (NILP(exps)) return shared->_nil;
+    obj_t*
+    evaluator_t::eval_sequence(obj_t* exps, env_t* env)
+    {
+        if (NILP(exps)) return shared->_nil;
 
-		obj_t* rest = CDR(exps);
+        obj_t* rest = CDR(exps);
 
-		if (NILP(rest)) return eval(CAR(exps), env);
+        if (NILP(rest)) return eval(CAR(exps), env);
 
-		eval(CAR(exps), env);
+        eval(CAR(exps), env);
 
-		return eval_sequence(rest, env);
-	}
+        return eval_sequence(rest, env);
+    }
 
-	obj_t*
-	evaluator_t::eval_do(obj_t* exp, env_t* env)
-	{
-		obj_t* rest = CDR(exp);
+    obj_t*
+    evaluator_t::eval_do(obj_t* exp, env_t* env)
+    {
+        obj_t* rest = CDR(exp);
 
-		if (NILP(rest))
-			return shared->_nil;
+        if (NILP(rest))
+            return shared->_nil;
 
-		return eval_sequence(rest, env);
-	}
+        return eval_sequence(rest, env);
+    }
 
-	obj_t*
-	evaluator_t::eval_and_sequence(obj_t* exps, env_t* env)
-	{
-		obj_t* last = shared->t;
+    obj_t*
+    evaluator_t::eval_and_sequence(obj_t* exps, env_t* env)
+    {
+        obj_t* last = shared->t;
 
-		if (CONSP(exps)) {
-			while (!NILP(exps)) {
+        if (CONSP(exps)) {
+            while (!NILP(exps)) {
 
-				if(!is_true(eval(CAR(exps), env)))
-					return shared->_nil;
+                if(!is_true(eval(CAR(exps), env)))
+                    return shared->_nil;
 
-				last = CAR(exps);
-				exps = CDR(exps);
-			}
-		}
+                last = CAR(exps);
+                exps = CDR(exps);
+            }
+        }
 
-		return last;
-	}
+        return last;
+    }
 
-	inline obj_t*
-	evaluator_t::eval_and(obj_t* exp, env_t* env)
-	{
-		return eval_and_sequence(CDR(exp), env);
-	}
+    inline obj_t*
+    evaluator_t::eval_and(obj_t* exp, env_t* env)
+    {
+        return eval_and_sequence(CDR(exp), env);
+    }
 
-	obj_t*
-	evaluator_t::eval_or_sequence(obj_t* exps, env_t* env)
-	{
+    obj_t*
+    evaluator_t::eval_or_sequence(obj_t* exps, env_t* env)
+    {
 
-		if (CONSP(exps)) {
-			while (!NILP(exps)) {
+        if (CONSP(exps)) {
+            while (!NILP(exps)) {
 
-				if(is_true(eval(CAR(exps), env)))
-					return CAR(exps);
+                if(is_true(eval(CAR(exps), env)))
+                    return CAR(exps);
 
-				exps = CDR(exps);
-			}
-		}
+                exps = CDR(exps);
+            }
+        }
 
-		return shared->_nil;
-	}
+        return shared->_nil;
+    }
 
-	inline obj_t*
-	evaluator_t::eval_or(obj_t* exp, env_t* env)
-	{
-		return eval_or_sequence(CDR(exp), env);
-	}
+    inline obj_t*
+    evaluator_t::eval_or(obj_t* exp, env_t* env)
+    {
+        return eval_or_sequence(CDR(exp), env);
+    }
 
 
 // apply
-	obj_t*
-	evaluator_t::apply(function_t* proc, obj_t* args)
-	{
+    obj_t*
+    evaluator_t::apply(function_t* proc, obj_t* args)
+    {
 
-		if (is_primitive_procedure(proc)) {
-			try {
-				return apply_primitive_procedure((subr_t*)proc, args);
-			} catch (const char* message) {
-				CALLERROR("primitive procedure -- APPLY %s", message);
-			}
+        if (is_primitive_procedure(proc)) {
+            try {
+                return apply_primitive_procedure((subr_t*)proc, args);
+            } catch (const char* message) {
+                CALLERROR("primitive procedure -- APPLY %s", message);
+            }
 
-		} else if (is_compound_procedure(proc)) {
-			return apply_compound_procedure((closure_t*)proc, args);
+        } else if (is_compound_procedure(proc)) {
+            return apply_compound_procedure((closure_t*)proc, args);
 
-		} else {
-			char buf[1024];
-			proc->print(buf, 1024);
+        } else {
+            char buf[1024];
+            proc->print(buf, 1024);
 
-			CALLERROR("unknown procedure type -- APPLY %s", buf);
-		}
+            CALLERROR("unknown procedure type -- APPLY %s", buf);
+        }
 
-		return shared->undef;
-	}
+        return shared->undef;
+    }
 
-	obj_t*
-	evaluator_t::apply_primitive_procedure(subr_t* proc, obj_t* args)
-	{
-		obj_t* (*func)(obj_t* arg, Shared* shared);
-		func = (obj_t* (*)(obj_t*, Shared*))proc->func();
+    obj_t*
+    evaluator_t::apply_primitive_procedure(subr_t* proc, obj_t* args)
+    {
+        obj_t* (*func)(obj_t* arg, Shared* shared);
+        func = (obj_t* (*)(obj_t*, Shared*))proc->func();
 
-		return (*func)(args, shared);
-	}
+        return (*func)(args, shared);
+    }
 
-	inline bool
-	evaluator_t::is_primitive_procedure(const function_t* proc)
-	{
-		return SUBRP(proc);
-	}
+    inline bool
+    evaluator_t::is_primitive_procedure(const function_t* proc)
+    {
+        return SUBRP(proc);
+    }
 
-	obj_t*
-	evaluator_t::apply_compound_procedure(closure_t* proc, obj_t* args)
-	{
-		proc->env()->extend(proc->param(), args);
-		obj_t* ret = eval_sequence(proc->body(), proc->env());
-		proc->env()->enclose();
+    obj_t*
+    evaluator_t::apply_compound_procedure(closure_t* proc, obj_t* args)
+    {
+        proc->env()->extend(proc->param(), args);
+        obj_t* ret = eval_sequence(proc->body(), proc->env());
+        proc->env()->enclose();
 
-		return ret;
-	}
+        return ret;
+    }
 
-	inline bool
-	evaluator_t::is_compound_procedure(const function_t* proc)
-	{
-		return CLOSUREP(proc);
-	}
+    inline bool
+    evaluator_t::is_compound_procedure(const function_t* proc)
+    {
+        return CLOSUREP(proc);
+    }
 
 
 // macro
-	obj_t*
-	evaluator_t::expand_macro(macro_t* macro_fn, obj_t* exp)
-	{
-		macro_fn->env()->extend(macro_fn->param(), exp);
-		obj_t* ret = eval_sequence(macro_fn->body(), macro_fn->env());
-		macro_fn->env()->enclose();
+    obj_t*
+    evaluator_t::expand_macro(macro_t* macro_fn, obj_t* exp)
+    {
+        macro_fn->env()->extend(macro_fn->param(), exp);
+        obj_t* ret = eval_sequence(macro_fn->body(), macro_fn->env());
+        macro_fn->env()->enclose();
 
-		return ret;
-	}
+        return ret;
+    }
 
-	void evaluator_t::error(const char* fname, unsigned int line, const char* fmt, ...)
-	{
-		va_list arg;
-		va_start(arg, fmt);
+    void evaluator_t::error(const char* fname, unsigned int line, const char* fmt, ...)
+    {
+        va_list arg;
+        va_start(arg, fmt);
 
-		fprintf(stderr, "%s:%u !! ERROR in 'EVALUATOR' !! -- ", fname, line);
-		vfprintf(stderr, fmt, arg);
-		fprintf(stderr, "\n\n");
+        fprintf(stderr, "%s:%u !! ERROR in 'EVALUATOR' !! -- ", fname, line);
+        vfprintf(stderr, fmt, arg);
+        fprintf(stderr, "\n\n");
 
-		fflush(stderr);
+        fflush(stderr);
 
-		va_end(arg);
+        va_end(arg);
 
-		throw "EVALUATOR_ERROR";
-	}
+        throw "EVALUATOR_ERROR";
+    }
 
 }

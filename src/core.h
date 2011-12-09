@@ -34,8 +34,8 @@
 ssize_t fdprintf(int fd, const char *fmt, ...);
 #endif
 
-#define READ_STRING_SMALL_BUFFER_SIZE	1024
-#define READ_NUMBER_BUFFER_SIZE			256
-#define MAX_READ_SYMBOL_LENGTH			256
+#define READ_STRING_SMALL_BUFFER_SIZE   1024
+#define READ_NUMBER_BUFFER_SIZE         256
+#define MAX_READ_SYMBOL_LENGTH          256
 
 #endif // GLAZE__CORE_H_

@@ -6,22 +6,22 @@
 
 namespace glaze {
 
-	class env_t;
-	class symbol_table;
-	class evaluator_t;
-	class reader_t;
+    class env_t;
+    class symbol_table;
+    class evaluator_t;
+    class reader_t;
 
-	typedef struct shared_
-	{
-		nil_t*			_nil;
-		t_t*			t;
-		undef_t*		undef;
-		env_t*			global_env;
+    typedef struct shared_
+    {
+        nil_t*          _nil;
+        t_t*            t;
+        undef_t*        undef;
+        env_t*          global_env;
 
-		symbol_table*	symbols;
-		evaluator_t*	evaluator;
-		reader_t*		reader;
-	} Shared;
+        symbol_table*   symbols;
+        evaluator_t*    evaluator;
+        reader_t*       reader;
+    } Shared;
 
 }
 
