@@ -24,26 +24,20 @@ namespace glaze {
 		shared.symbols		= new symbol_table();
 		shared.global_env	= new env_t();
 
-		//fprintf(stdout, "env_t ptr (%p).\n", shared.global_env);
-		//fflush(stdout);
-
 		shared.evaluator	= new evaluator_t(&shared);
 		shared.reader		= new reader_t(&shared);
 
-		std::vector<const symbol_t*, traceable_allocator<const symbol_t*> >* primitive_variables =
-			new std::vector<const symbol_t*, traceable_allocator<const symbol_t*> >();
+		std::vector<const symbol_t*> primitive_variables    = std::vector<const symbol_t*>();
+		std::vector<obj_t*> primitive_values                = std::vector<obj_t*>();
 
-		std::vector<obj_t*, traceable_allocator<obj_t*> >* primitive_values	=
-			new std::vector<obj_t*, traceable_allocator<obj_t*> >();
+		primitives::setup_primitives(&primitive_variables, &primitive_values, &shared);
 
-		primitives::setup_primitives(primitive_variables, primitive_values, &shared);
+		primitive_variables.push_back(shared.symbols->get("nil"));
+		primitive_values.push_back((obj_t*)shared._nil);
+		primitive_variables.push_back(shared.symbols->get("t"));
+		primitive_values.push_back((obj_t*)shared.t);
 
-		primitive_variables->push_back(shared.symbols->get("nil"));
-		primitive_values->push_back((obj_t*)shared._nil);
-		primitive_variables->push_back(shared.symbols->get("t"));
-		primitive_values->push_back((obj_t*)shared.t);
-
-		shared.global_env->extend(primitive_variables, primitive_values);
+		shared.global_env->extend(&primitive_variables, &primitive_values);
 	}
 
 	Interpreter::~Interpreter()

@@ -13,6 +13,8 @@
 #include <fcntl.h>
 
 #include <vector>
+#include <map>
+#include <string>
 
 /* for BoehmGC */
 #define GC_DEBUG

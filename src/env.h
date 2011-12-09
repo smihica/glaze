@@ -7,17 +7,19 @@
 
 namespace glaze {
 
+    typedef std::map< const uintptr_t,
+                      obj_t*,
+                      std::less<uintptr_t>,
+                      traceable_allocator<std::pair<const uintptr_t, obj_t*> > > ptr_object_table_t;
+
 	class frame_t :
 		public gc_cleanup /* using boehmGC */
 	{
 	public:
 		frame_t();
-		frame_t(std::vector<const symbol_t*, traceable_allocator<const symbol_t*> >* variables,
-				std::vector<obj_t*, traceable_allocator<obj_t*> >* values);
+		frame_t(std::vector<const symbol_t*>* variables, std::vector<obj_t*>* values);
 		~frame_t();
 
-		std::vector<const symbol_t*, traceable_allocator<const symbol_t*> >*	variables();
-		std::vector<obj_t*, traceable_allocator<obj_t*> >*				values();
 		void add_binding(const symbol_t* variable, obj_t* value);
 		bool rem_binding(const symbol_t* variable);
 		bool change_binding(const symbol_t* variable, obj_t* value);
@@ -26,8 +28,7 @@ namespace glaze {
 		void   print();
 
 	private:
-		std::vector<const symbol_t*, traceable_allocator<const symbol_t*> >* m_variables;
-		std::vector<obj_t*, traceable_allocator<obj_t*> >* m_values;
+        ptr_object_table_t m_table;
 	};
 
 	class env_t :
@@ -37,8 +38,7 @@ namespace glaze {
 		env_t();
 		env_t(const env_t& env);
 		~env_t();
-		void extend(std::vector<const symbol_t*, traceable_allocator<const symbol_t*> >* variables,
-					std::vector<obj_t*, traceable_allocator<obj_t*> >* values);
+		void extend(std::vector<const symbol_t*>* variables, std::vector<obj_t*>* values);
 		void extend(obj_t* params, obj_t* args);
 		void extend(frame_t* frame);
 		void extend();

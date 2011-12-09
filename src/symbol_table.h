@@ -1,8 +1,7 @@
 #ifndef GLAZE__SYMBOL_TABLE_H_
 #define GLAZE__SYMBOL_TABLE_H_
 
-#include <map>
-#include <string>
+#include "core.h"
 
 namespace glaze {
 
