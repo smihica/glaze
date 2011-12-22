@@ -10,7 +10,7 @@
 
 namespace glaze {
 
-    Interpreter::Interpreter(Config* conf)
+    Interpreter::Interpreter(Config* conf) : m_initialized(false)
     {
         GC_INIT();
 
@@ -38,11 +38,29 @@ namespace glaze {
         primitive_values.push_back((obj_t*)shared.t);
 
         shared.global_env->extend(&primitive_variables, &primitive_values);
+
+        init_cores();
     }
 
     Interpreter::~Interpreter()
     {
         shared.global_env->enclose();
+    }
+
+    void Interpreter::init_cores()
+    {
+        if (m_initialized) return;
+
+        const int core_len = 1;
+        const char* core_libs[core_len] = {
+#include "arc/base.arc.core"
+        };
+
+        for (int i = 0; i < core_len; i++ ){
+            read_and_evaluate(core_libs[i]);
+        }
+
+        m_initialized = true;
     }
 
     int Interpreter::repl()
@@ -120,6 +138,30 @@ namespace glaze {
         return 0;
     }
 
+    int Interpreter::read_and_evaluate(const char* src)
+    {
+        obj_t* read_result;
+        obj_t* eval_result;
+        size_t read_size_1;
+        size_t read_size = 0;
+
+    retry:
+        try {
+            while (1) {
+                read_result = shared.reader->read(src+read_size, &read_size_1);
+                read_size += read_size_1;
+                if (read_result == shared.reader->S_EOF) break;
+                eval_result = shared.evaluator->eval(read_result, shared.global_env);
+            }
+        } catch (const char* msg) {
+            fprintf(stderr, "    -- %s\n", msg);
+            fflush(stderr);
+            goto retry;
+        }
+
+        return 0;
+    }
+
     obj_t* Interpreter::read()
     {
         return read(stdin);
@@ -135,9 +177,9 @@ namespace glaze {
         return shared.reader->read(fd);
     }
 
-    obj_t* Interpreter::read(const char* target)
+    obj_t* Interpreter::read(const char* target, size_t* read_size)
     {
-        return shared.reader->read(target);
+        return shared.reader->read(target, read_size);
     }
 
     obj_t* Interpreter::eval(obj_t* obj)

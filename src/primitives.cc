@@ -174,7 +174,7 @@ namespace glaze {
                 return shared->t;
             }
 
-            if (STRINGP(first)){
+            if (STRINGP(first)) {
 
                 do {
                     const string_t* s = (string_t*)first;
@@ -189,7 +189,40 @@ namespace glaze {
                 return shared->t;
             }
 
-            throw "primitive procedure '+' some arguments are invalid.";
+/*
+            if (SYMBOLP(first)) {
+
+                do {
+                    const symbol_t* s = (const symbol_t*)first;
+                    first = CAR(rest);
+                    if (!SYMBOLP(first)) return shared->_nil;
+                    const symbol_t* s2 = (const symbol_t*)first;
+
+                    // memory comparing.
+                    if (s != s2) return shared->_nil;
+
+                    rest = CDR(rest);
+
+                } while (!NILP(rest));
+
+                return shared->t;
+            }
+*/
+            // for SYMBOL, CONS and OTHER_OBJECTS
+            do {
+                const obj_t* s = first;
+                first = CAR(rest);
+                const obj_t* s2 = first;
+
+                // memory comparing.
+                if (s != s2) return shared->_nil;
+
+                rest = CDR(rest);
+
+            } while (!NILP(rest));
+
+            return shared->t;
+
         }
 
         obj_t* smaller_than(obj_t* args, Shared* shared)
@@ -348,6 +381,22 @@ namespace glaze {
             throw "wrong number of arguments. 'cons' expects 2, given 1.";
         }
 
+        obj_t* acons(obj_t* args, Shared* shared)
+        {
+            if (NILP(args)) {
+                throw "wrong number of arguments. 'acons' expects 1";
+
+            } else if (!NILP(CDR(args))) {
+                throw "wrong number of arguments. 'acons' expects 1, given 2 or more.";
+
+            }
+
+            return ( CONSP(CAR(args)) ?
+                     reinterpret_cast<obj_t*>(shared->t) :
+                     reinterpret_cast<obj_t*>(shared->_nil) );
+        }
+
+
         obj_t* list(obj_t* args, Shared* shared)
         {
             obj_t* ret = shared->_nil;
@@ -449,6 +498,9 @@ namespace glaze {
 
             variables->push_back(shared->symbols->get("cons"));
             values->push_back(new subr_t("cons", (void*)cons));
+
+            variables->push_back(shared->symbols->get("acons"));
+            values->push_back(new subr_t("acons", (void*)acons));
 
             variables->push_back(shared->symbols->get("list"));
             values->push_back(new subr_t("list", (void*)list));

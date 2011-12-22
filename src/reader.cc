@@ -56,10 +56,12 @@ namespace glaze {
         return read_expr();
     }
 
-    obj_t* reader_t::read(const char* src)
+    obj_t* reader_t::read(const char* src, size_t* read_size)
     {
         set_source(src);
-        return read_expr();
+        obj_t* ret = read_expr();
+        (*read_size) = m_read;
+        return ret;
     }
 
     void reader_t::set_source(int fd)

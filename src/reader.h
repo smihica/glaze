@@ -15,7 +15,7 @@ namespace glaze {
         obj_t* read();
         obj_t* read(int fd);
         obj_t* read(FILE* fp);
-        obj_t* read(const char* src);
+        obj_t* read(const char* src, size_t* read_size);
 
         void set_source(int fd);
         void set_source(FILE* fp);

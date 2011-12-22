@@ -192,11 +192,11 @@ namespace glaze {
     inline obj_t*
     evaluator_t::eval_quote(obj_t* exp, env_t* env)
     {
-        if (NILP(CDR(exp))) {
+        if (NILP(CDR(exp)) || !NILP(CDDR(exp))) {
             char buf[1024];
             exp->print(buf, 1024);
 
-            CALLERROR("error in quote! : Expects argument of type cadrable value -- EVAL_QUOTE %s", buf);
+            CALLERROR("Bad syntax -- EVAL_QUOTE %s", buf);
         }
 
         return CADR(exp);

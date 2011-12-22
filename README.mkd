@@ -12,9 +12,10 @@ Arc is a dialect of the Lisp programming language now under development by Paul 
 
 ## How to build
 
-    ./configure
-    make
-    sudo make install
+    $ python src/arc/converter.py
+    $ ./configure
+    $ make
+    $ sudo make install
 
 ## License
 
