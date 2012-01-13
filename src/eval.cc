@@ -379,10 +379,10 @@ namespace glaze {
     }
 
 /*
-  (fn)
-  (fn a)
-  (fn a b)
-  (fn "ab" c)
+  (fn)        -> NG
+  (fn a)      -> OK
+  (fn a b)    -> OK
+  (fn "ab" c) -> NG
 */
     obj_t*
     evaluator_t::eval_fn(obj_t* exp, env_t* env)
@@ -391,12 +391,16 @@ namespace glaze {
         obj_t* rest;
         closure_t* ret;
 
-        if (NILP(CDR(exp))) goto error_eval_fn;
+        if (NILP(CDR(exp))) {
+            CALLERROR("Error: fn expects at least 1 argument. given (fn)");
+        }
 
         second = CADR(exp);
-        if (NILP(second)) goto error_eval_fn;
         rest = CDDR(exp);
-//  if (NILP(rest))  goto error_eval_fn; // disable empty fn.
+
+        if (!(NILP(second) || CONSP(second))) {
+            CALLERROR("Error: the argument of fn must be able to understand list.");
+        }
 
         ret = new closure_t(second, rest, env);
 
