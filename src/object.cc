@@ -218,9 +218,9 @@ namespace glaze {
 **  number_t
 */
 
-    number_t::number_t(number_t* n)   { operator=(n); m_type = NUMBER; }
-    number_t::number_t(int64_t n)     { operator=(n); m_type = NUMBER; }
-    number_t::number_t(double n)      { operator=(n); m_type = NUMBER; }
+    number_t::number_t(const number_t* n)   { operator=(n); m_type = NUMBER; }
+    number_t::number_t(const int64_t n)     { operator=(n); m_type = NUMBER; }
+    number_t::number_t(const double n)      { operator=(n); m_type = NUMBER; }
 
     number_t&
     number_t::operator=(const number_t& n) {
@@ -257,57 +257,85 @@ namespace glaze {
     const number_t
     number_t::operator+(const number_t& n) const
     {
-        if (m_number_type == FIXNUM && n.get_number_type() == FIXNUM) {
+        int type_set = ((int)m_number_type << 1) | n.get_number_type();
+
+        switch (type_set) {
+        case 0: // 00 int int
             return number_t(m_value.fixnum + n.get_fixnum());
-        }
-
-        if (m_number_type == FIXNUM) {
+        case 1: // 01 int float
             return number_t(static_cast<double>(m_value.fixnum) + n.get_floatnum());
+        case 2: // 10 float int
+            return number_t(m_value.floatnum + static_cast<double>(n.get_fixnum()));
+        case 3: // 11 float float
+            return number_t(m_value.floatnum + n.get_floatnum());
+        default:
+            CALLERROR("number + is filed.");
         }
 
-        return number_t(m_value.floatnum + static_cast<double>(n.get_fixnum()));
+        return *this;
     }
 
     const number_t
     number_t::operator-(const number_t& n) const
     {
-        if (m_number_type == FIXNUM && n.get_number_type() == FIXNUM) {
+        int type_set = ((int)m_number_type << 1) | n.get_number_type();
+
+        switch (type_set) {
+        case 0: // 00 int int
             return number_t(m_value.fixnum - n.get_fixnum());
-        }
-
-        if (m_number_type == FIXNUM) {
+        case 1: // 01 int float
             return number_t(static_cast<double>(m_value.fixnum) - n.get_floatnum());
+        case 2: // 10 float int
+            return number_t(m_value.floatnum - static_cast<double>(n.get_fixnum()));
+        case 3: // 11 float float
+            return number_t(m_value.floatnum - n.get_floatnum());
+        default:
+            CALLERROR("number - is filed.");
         }
 
-        return number_t(m_value.floatnum - static_cast<double>(n.get_fixnum()));
+        return *this;
     }
 
     const number_t
     number_t::operator*(const number_t& n) const
     {
-        if (m_number_type == FIXNUM && n.get_number_type() == FIXNUM) {
+        int type_set = ((int)m_number_type << 1) | n.get_number_type();
+
+        switch (type_set) {
+        case 0: // 00 int int
             return number_t(m_value.fixnum * n.get_fixnum());
-        }
-
-        if (m_number_type == FIXNUM) {
+        case 1: // 01 int float
             return number_t(static_cast<double>(m_value.fixnum) * n.get_floatnum());
+        case 2: // 10 float int
+            return number_t(m_value.floatnum * static_cast<double>(n.get_fixnum()));
+        case 3: // 11 float float
+            return number_t(m_value.floatnum * n.get_floatnum());
+        default:
+            CALLERROR("number * is filed.");
         }
 
-        return number_t(m_value.floatnum * static_cast<double>(n.get_fixnum()));
+        return *this;
     }
 
     const number_t
     number_t::operator/(const number_t& n) const
     {
-        if (m_number_type == FIXNUM && n.get_number_type() == FIXNUM) {
+        int type_set = ((int)m_number_type << 1) | n.get_number_type();
+
+        switch (type_set) {
+        case 0: // 00 int int
             return number_t(m_value.fixnum / n.get_fixnum());
+        case 1: // 01 int float
+           return number_t(static_cast<double>(m_value.fixnum) / n.get_floatnum());
+        case 2: // 10 float int
+            return number_t(m_value.floatnum / static_cast<double>(n.get_fixnum()));
+        case 3: // 11 float float
+            return number_t(m_value.floatnum / n.get_floatnum());
+        default:
+            CALLERROR("number / is filed.");
         }
 
-        if (m_number_type == FIXNUM) {
-            return number_t(static_cast<double>(m_value.fixnum) / n.get_floatnum());
-        }
-
-        return number_t(m_value.floatnum / static_cast<double>(n.get_fixnum()));
+        return *this;
     }
 
     const bool

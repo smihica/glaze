@@ -116,9 +116,9 @@ namespace glaze {
     class number_t :
         public obj_t {
     public:
-        number_t(number_t* n);
-        number_t(int64_t n = 0);
-        number_t(double n);
+        number_t(const number_t* n);
+        number_t(const int64_t n = 0);
+        number_t(const double n);
 
         number_t& operator=(const number_t& n);
         number_t& operator=(const int64_t n);
@@ -147,7 +147,7 @@ namespace glaze {
 
     private:
         enum number_type {
-            FIXNUM, FLOAT
+            FIXNUM = 0, FLOAT = 1
         };
 
         union value {
