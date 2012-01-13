@@ -189,25 +189,6 @@ namespace glaze {
                 return shared->t;
             }
 
-/*
-            if (SYMBOLP(first)) {
-
-                do {
-                    const symbol_t* s = (const symbol_t*)first;
-                    first = CAR(rest);
-                    if (!SYMBOLP(first)) return shared->_nil;
-                    const symbol_t* s2 = (const symbol_t*)first;
-
-                    // memory comparing.
-                    if (s != s2) return shared->_nil;
-
-                    rest = CDR(rest);
-
-                } while (!NILP(rest));
-
-                return shared->t;
-            }
-*/
             // for SYMBOL, CONS and OTHER_OBJECTS
             do {
                 const obj_t* s = first;
@@ -258,6 +239,40 @@ namespace glaze {
             throw "primitive procedure '<' some arguments are invalid.";
         }
 
+        obj_t* smaller_than_or_equal(obj_t* args, Shared* shared)
+        {
+            if (NILP(args)) {
+                return shared->t;
+            }
+
+            if(!CONSP(args)) throw "invalid arg.";
+
+            obj_t* first = CAR(args);
+            obj_t* rest  = CDR(args);
+
+            if (NILP(rest)) {
+                return shared->t;
+            }
+
+            if (NUMBERP(first)) {
+
+                do {
+                    const number_t* n = (number_t*)first;
+                    first = CAR(rest);
+                    if (!NUMBERP(first)) throw "primitive procedure '<=' some arguments are invalid.";
+                    const number_t* n2 = (number_t*)first;
+                    if (*n > *n2) return shared->_nil;
+                    rest = CDR(rest);
+
+                } while (!NILP(rest));
+
+                return shared->t;
+            }
+
+            throw "primitive procedure '<=' some arguments are invalid.";
+        }
+
+
         obj_t* bigger_than(obj_t* args, Shared* shared)
         {
             if (NILP(args)) {
@@ -290,6 +305,40 @@ namespace glaze {
 
             throw "primitive procedure '>' some arguments are invalid.";
         }
+
+        obj_t* bigger_than_or_equal(obj_t* args, Shared* shared)
+        {
+            if (NILP(args)) {
+                return shared->t;
+            }
+
+            if(!CONSP(args)) throw "invalid arg.";
+
+            obj_t* first = CAR(args);
+            obj_t* rest  = CDR(args);
+
+            if (NILP(rest)) {
+                return shared->t;
+            }
+
+            if (NUMBERP(first)) {
+
+                do {
+                    const number_t* n = (number_t*)first;
+                    first = CAR(rest);
+                    if (!NUMBERP(first)) throw "primitive procedure '>=' some arguments are invalid.";
+                    const number_t* n2 = (number_t*)first;
+                    if (*n < *n2) return shared->_nil;
+                    rest = CDR(rest);
+
+                } while (!NILP(rest));
+
+                return shared->t;
+            }
+
+            throw "primitive procedure '>=' some arguments are invalid.";
+        }
+
 
         obj_t* no(obj_t* args, Shared* shared)
         {
@@ -333,6 +382,7 @@ namespace glaze {
             }
 
             throw "'car' the argument is invalid.";
+
         }
 
         obj_t* cdr(obj_t* args, Shared* shared)
@@ -357,6 +407,7 @@ namespace glaze {
             }
 
             throw "'cdr' the argument is invalid.";
+
         }
 
         obj_t* cons(obj_t* args, Shared* shared)
@@ -462,6 +513,38 @@ namespace glaze {
             return shared->undef;
         }
 
+        obj_t* uniq(obj_t* args, Shared* shared)
+        {
+            if (!NILP(args)) {
+                throw "procedure ar-gensym: expects no arguments. given 1 or more.";
+            }
+
+            // logical max is gs18446744073709551615
+            char buf[25]; buf[0] = '\0';
+            snprintf(buf, 25, "gs%llu", (++(shared->gs_acc)));
+
+            return const_cast<symbol_t*>(shared->symbols->get(buf));
+        }
+
+        obj_t* disp(obj_t* args, Shared* shared)
+        {
+            if (NILP(args)) {
+                return shared->_nil;
+            }
+
+            if (!NILP(CDR(args))) {
+                // TODO output port.
+                throw "output definition is not surported yet. please wait.";
+            }
+
+            obj_t* obj = CAR(args);
+
+            // TODO display function.
+            // obj->disp();
+
+            return shared->_nil;
+        }
+
         void setup_primitives( std::vector<const symbol_t*>* variables,
                                std::vector<obj_t*>* values,
                                Shared* shared)
@@ -484,8 +567,14 @@ namespace glaze {
             variables->push_back(shared->symbols->get("<"));
             values->push_back(new subr_t("<", (void*)smaller_than));
 
+            variables->push_back(shared->symbols->get("<="));
+            values->push_back(new subr_t("<=", (void*)smaller_than_or_equal));
+
             variables->push_back(shared->symbols->get(">"));
             values->push_back(new subr_t(">", (void*)bigger_than));
+
+            variables->push_back(shared->symbols->get(">="));
+            values->push_back(new subr_t(">=", (void*)bigger_than_or_equal));
 
             variables->push_back(shared->symbols->get("no"));
             values->push_back(new subr_t("no", (void*)no));
@@ -507,6 +596,12 @@ namespace glaze {
 
             variables->push_back(shared->symbols->get("load"));
             values->push_back(new subr_t("load", (void*)load));
+
+            variables->push_back(shared->symbols->get("uniq"));
+            values->push_back(new subr_t("uniq", (void*)uniq));
+
+            variables->push_back(shared->symbols->get("disp"));
+            values->push_back(new subr_t("disp", (void*)disp));
 
             return;
         }

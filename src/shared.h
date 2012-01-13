@@ -21,6 +21,9 @@ namespace glaze {
         symbol_table*   symbols;
         evaluator_t*    evaluator;
         reader_t*       reader;
+
+        uint64_t        gs_acc;
+
     } Shared;
 
 }

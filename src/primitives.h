@@ -14,13 +14,18 @@ namespace glaze {
         obj_t* devide(obj_t* args, Shared* shared);
         obj_t* equal(obj_t* args, Shared* shared);
         obj_t* smaller_than(obj_t* args, Shared* shared);
+        obj_t* smaller_than_or_equal(obj_t* args, Shared* shared);
         obj_t* bigger_than(obj_t* args, Shared* shared);
+        obj_t* bigger_than_or_equal(obj_t* args, Shared* shared);
         obj_t* no(obj_t* args, Shared* shared);
         obj_t* car(obj_t* args, Shared* shared);
         obj_t* cdr(obj_t* args, Shared* shared);
         obj_t* cons(obj_t* args, Shared* shared);
+        obj_t* acons(obj_t* args, Shared* shared);
         obj_t* list(obj_t* args, Shared* shared);
         obj_t* load(obj_t* args, Shared* shared);
+        obj_t* uniq(obj_t* args, Shared* shared);
+        obj_t* disp(obj_t* args, Shared* shared);
 
         void setup_primitives(
             std::vector<const symbol_t*>* variables,
