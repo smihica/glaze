@@ -398,7 +398,7 @@ namespace glaze {
         second = CADR(exp);
         rest = CDDR(exp);
 
-        if (!(NILP(second) || CONSP(second))) {
+        if (!(CONSP(second) || NILP(second) || SYMBOLP(second))) {
             CALLERROR("Error: the argument of fn must be able to understand list.");
         }
 
