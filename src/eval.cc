@@ -514,10 +514,12 @@ namespace glaze {
         if (CONSP(exps)) {
             while (!NILP(exps)) {
 
-                if(!is_true(eval(CAR(exps), env)))
+                obj_t* evaled = eval(CAR(exps), env);
+
+                if(!is_true(evaled))
                     return shared->_nil;
 
-                last = CAR(exps);
+                last = evaled;
                 exps = CDR(exps);
             }
         }
@@ -538,8 +540,9 @@ namespace glaze {
         if (CONSP(exps)) {
             while (!NILP(exps)) {
 
-                if(is_true(eval(CAR(exps), env)))
-                    return CAR(exps);
+                obj_t* evaled = eval(CAR(exps), env);
+
+                if(is_true(evaled)) return evaled;
 
                 exps = CDR(exps);
             }
