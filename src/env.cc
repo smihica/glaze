@@ -37,6 +37,14 @@ namespace glaze {
         uintptr_t ptr = reinterpret_cast<uintptr_t>(variable);
         m_table[ptr] = value;
 
+/*
+        uintptr_t ptr_table = reinterpret_cast<uintptr_t>(&m_table);
+        variable->print();
+        printf("(%u[%u]) <= ", (unsigned int)ptr_table, (unsigned int)ptr);
+        value->print();
+        printf("\n");
+*/
+
         return;
     }
 
@@ -262,6 +270,25 @@ namespace glaze {
         variable->print(buf, 1024);
 
         CALLERROR("unbound variable. -- SET %s", buf);
+    }
+
+    void
+    env_t::assign(const symbol_t* variable, obj_t* value)
+    {
+        std::vector<frame_t*, traceable_allocator<frame_t*> >::reverse_iterator it;
+        frame_t* f;
+
+        for(it = m_frames.rbegin(); it != m_frames.rend(); it++)
+        {
+            f = (*it);
+            if (f->change_binding(variable, value)) return;
+        }
+
+        f = m_frames.back();
+
+        f->add_binding(variable, value);
+
+        return;
     }
 
     void

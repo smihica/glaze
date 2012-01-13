@@ -48,6 +48,7 @@ namespace glaze {
         obj_t* lookup(const symbol_t* variable);
         void set(const symbol_t* variable, obj_t* value);
         void define(const symbol_t* variable, obj_t* value);
+        void assign(const symbol_t* variable, obj_t* value);
         void unbind(const symbol_t* variable);
 
         void error(const char* fname, unsigned int line, const char* fmt, ...);

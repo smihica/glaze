@@ -228,7 +228,7 @@ namespace glaze {
         else if (MACROP(ret))
             ((macro_t*)ret)->set_name(sym->name());
 
-        env->define(sym, ret);
+        env->assign(sym, ret);
 
         return ret;
 
