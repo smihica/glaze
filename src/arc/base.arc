@@ -20,59 +20,13 @@
   (if xs
       (cons (f (car xs)) (map1 f (cdr xs)))))
 
-(def cadr (x) (car (cdr x)))
-(def cddr (x) (cdr (cdr x)))
-
-(def caris (x y)
-  (and (acons x)
-       (is (car x) y)))
-
-(def pair (xs)
+(def pair (xs . f)
   (if (no xs)
-       nil
+      nil
       (no (cdr xs))
-       (list (list (car xs)))
-      (cons (list (car xs) (cadr xs))
-            (pair (cddr xs)))))
-
-(def %qq-expand (x)
-  (if (caris x 'unquote)
-      (cadr x)
-
-      (caris x 'unquote-splicing)
-      (err "Illegal")
-
-      (caris x 'quasiquote)
-      (%qq-expand
-        (%qq-expand (cadr x)))
-
-      (acons x)
-      (list 'join
-            (%qq-expand-list (car x))
-            (%qq-expand (cdr x)))
-
-      (list 'quote x)))
-
-(def %qq-expand-list (x)
-  (if (caris x 'unquote)
-      (list 'list (cadr x))
-
-      (caris x 'unquote-splicing)
-      (cadr x)
-
-      (caris x 'quasiquote)
-      (%qq-expand-list (%qq-expand (cadr x)))
-
-      (acons x)
-      (list 'list
-            (list 'join
-                  (%qq-expand-list (car x))
-                  (%qq-expand (cdr x))))
-
-      (list 'quote (list x))))
-
-(mac quasiquote (x)
-  (%qq-expand x))
+      (list (list (car xs)))
+      ((fn (f) (cons ((if f f list) (car xs) (cadr xs))
+                     (pair (cddr xs) f))) (car f))))
 
 (mac with (params . body)
   `((fn ,(map1 car (pair params)) ,@body)
@@ -81,3 +35,21 @@
 (mac let (var val . body)
   `(with (,var ,val)
      ,@body))
+
+(mac = (var val)
+  (list 'assign var val))
+
+;; TODO
+;; append -> +
+(mac w/uniq (args . body)
+  `(with ,(reduce append (map1 (fn (arg) `(,arg (uniq))) args))
+     ,@body))
+
+;; (aif (> 1 2) (+ it 1) 42 (+ it 2))
+(mac aif exps
+  `(let it ,(car exps)
+     (if it
+         ,(cadr exps)
+         ,(if (nthcdr 3 exps)
+              `(aif ,@(nthcdr 2 exps))
+              (nth 2 exps)))))

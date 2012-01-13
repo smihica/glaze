@@ -33,14 +33,6 @@ namespace glaze {
         std::vector<obj_t*> primitive_values                = std::vector<obj_t*>();
 
         primitives::setup_primitives(&primitive_variables, &primitive_values, &shared);
-
-/*
-        primitive_variables.push_back(shared.symbols->get("nil"));
-        primitive_values.push_back((obj_t*)shared._nil);
-        primitive_variables.push_back(shared.symbols->get("t"));
-        primitive_values.push_back((obj_t*)shared.t);
-*/
-
         shared.global_env->extend(&primitive_variables, &primitive_values);
 
         init_cores();
@@ -55,9 +47,12 @@ namespace glaze {
     {
         if (m_initialized) return;
 
-        const int core_len = 1;
+        const int core_len = 4;
         const char* core_libs[core_len] = {
 #include "arc/base.arc.core"
+#include "arc/qq.arc.core"
+#include "arc/list.arc.core"
+#include "arc/math.arc.core"
         };
 
         for (int i = 0; i < core_len; i++ ){
