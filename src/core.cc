@@ -1,5 +1,7 @@
 #include "core.h"
 
+#ifndef __linux__
+
 ssize_t fdprintf(int fd, const char *fmt, ...) {
     va_list ap;
     FILE *f = fdopen(fd, "a");
@@ -11,3 +13,5 @@ ssize_t fdprintf(int fd, const char *fmt, ...) {
     va_end(ap);
     return rc;
 }
+
+#endif
