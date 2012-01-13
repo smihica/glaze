@@ -36,8 +36,10 @@
   `(with (,var ,val)
      ,@body))
 
+;; TODO
+;; = is place function.
 (mac = (var val)
-  (list 'assign var val))
+  (list 'set var val))
 
 ;; TODO
 ;; append -> +

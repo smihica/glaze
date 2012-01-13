@@ -12,7 +12,7 @@ namespace glaze {
         shared = sh;
 
         special_symbols[0] = shared->symbols->get("quote");
-        special_symbols[1] = shared->symbols->get("assign");
+        special_symbols[1] = shared->symbols->get("set");
         special_symbols[2] = shared->symbols->get("if");
         special_symbols[3] = shared->symbols->get("fn");
         special_symbols[4] = shared->symbols->get("def");
