@@ -388,6 +388,9 @@ namespace glaze {
 */
     obj_t* reader_t::make_symbol(const char* buf)
     {
+        if (strcmp(buf, "nil") == 0) return shared->_nil;
+        if (strcmp(buf, "t") == 0) return shared->t;
+
         return const_cast<symbol_t*>(shared->symbols->get(buf));
     }
 

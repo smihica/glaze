@@ -69,7 +69,7 @@ namespace glaze {
     inline bool
     evaluator_t::is_self_evaluating(const obj_t* exp)
     {
-        return (NUMBERP(exp) || STRINGP(exp));
+        return (NILP(exp) || NUMBERP(exp) || STRINGP(exp) || TP(exp) || UNDEFP(exp));
     }
 
 

@@ -18,12 +18,14 @@ namespace glaze {
         shared.t        = new t_t();
         shared.undef    = new undef_t();
 
+        shared.gs_acc   = 0;
+
         // Important this order.
         // Because g_symbol_table is refered in
         // the reader and the evaluator and the env.
         shared.symbols      = new symbol_table();
-        shared.global_env   = new env_t();
 
+        shared.global_env   = new env_t();
         shared.evaluator    = new evaluator_t(&shared);
         shared.reader       = new reader_t(&shared);
 
@@ -32,10 +34,12 @@ namespace glaze {
 
         primitives::setup_primitives(&primitive_variables, &primitive_values, &shared);
 
+/*
         primitive_variables.push_back(shared.symbols->get("nil"));
         primitive_values.push_back((obj_t*)shared._nil);
         primitive_variables.push_back(shared.symbols->get("t"));
         primitive_values.push_back((obj_t*)shared.t);
+*/
 
         shared.global_env->extend(&primitive_variables, &primitive_values);
 
