@@ -38,10 +38,10 @@ namespace glaze {
         env_t();
         env_t(const env_t& env);
         ~env_t();
-        void extend(std::vector<const symbol_t*>* variables, std::vector<obj_t*>* values);
-        void extend(obj_t* params, obj_t* args);
-        void extend(frame_t* frame);
-        void extend();
+        int extend(std::vector<const symbol_t*>* variables, std::vector<obj_t*>* values);
+        int extend(obj_t* params, obj_t* args);
+        int extend(frame_t* frame);
+        int extend();
 
         void enclose();
 
@@ -54,6 +54,12 @@ namespace glaze {
         void error(const char* fname, unsigned int line, const char* fmt, ...);
 
         const std::vector<frame_t*, traceable_allocator<frame_t*> >& get_frames() const;
+
+        enum extend_result {
+            ARGUMENTS_RIGHT    = 0,
+            ARGUMENTS_TOO_FEW  = 1,
+            ARGUMENTS_TOO_MANY = 2,
+        };
 
     private:
         std::vector<frame_t*, traceable_allocator<frame_t*> > m_frames;

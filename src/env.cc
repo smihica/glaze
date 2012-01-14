@@ -126,7 +126,7 @@ namespace glaze {
         return m_frames;
     }
 
-    void
+    int
     env_t::extend(std::vector<const symbol_t*>* variables, std::vector<obj_t*>* values)
     {
         size_t vars_len = variables->size();
@@ -135,16 +135,17 @@ namespace glaze {
         if ( vars_len == vals_len ) {
             frame_t* frame = new frame_t(variables, values);
             m_frames.push_back(frame);
-            return;
+            return ARGUMENTS_RIGHT;
         }
 
         if ( vars_len < vals_len )
-            CALLERROR("too many arguments supplied -- EXTEND vars_len = %d, vals_len = %d", vars_len, vals_len);
+            return ARGUMENTS_TOO_MANY; //CALLERROR("too many arguments supplied -- EXTEND vars_len = %d, vals_len = %d", vars_len, vals_len);
 
-        CALLERROR("too few arguments supplied -- EXTEND vars_len = %d, vals_len = %d", vars_len, vals_len);
+        return ARGUMENTS_TOO_FEW; //CALLERROR("too few arguments supplied -- EXTEND vars_len = %d, vals_len = %d", vars_len, vals_len);
+
     }
 
-    void
+    int
     env_t::extend(obj_t* params, obj_t* args)
     {
         obj_t* var;
@@ -162,7 +163,8 @@ namespace glaze {
 
             if (NILP(args)) {
                 delete frame;
-                CALLERROR("too few arguments supplied -- EXTEND");
+                return ARGUMENTS_TOO_FEW;
+                // CALLERROR("too few arguments supplied -- EXTEND");
             }
 
             var = CAR(params);
@@ -187,13 +189,14 @@ namespace glaze {
 
         if (NILP(params) && !NILP(args)) {
             delete frame;
-            CALLERROR("too many arguments supplied -- EXTEND");
+            return ARGUMENTS_TOO_MANY;
+            // CALLERROR("too many arguments supplied -- EXTEND");
         }
 
         // success !!
         m_frames.push_back(frame);
 
-        return;
+        return ARGUMENTS_RIGHT;
 
     error_extend_obj_t:
         delete frame;
@@ -205,19 +208,19 @@ namespace glaze {
         CALLERROR("params and args must be SYMOBL or NIL or CONS -- EXTEND params = %s, args = %s", buf1, buf2);
     }
 
-    void
+    int
     env_t::extend(frame_t* n_frame)
     {
         m_frames.push_back(n_frame);
-        return;
+        return ARGUMENTS_RIGHT;
     }
 
-    void
+    int
     env_t::extend()
     {
         frame_t* frame = new frame_t();
         m_frames.push_back(frame);
-        return;
+        return ARGUMENTS_RIGHT;
     }
 
     void

@@ -33,7 +33,10 @@ namespace glaze {
         std::vector<obj_t*> primitive_values                = std::vector<obj_t*>();
 
         primitives::setup_primitives(&primitive_variables, &primitive_values, &shared);
-        shared.global_env->extend(&primitive_variables, &primitive_values);
+        int extend_result = shared.global_env->extend(&primitive_variables, &primitive_values);
+
+        if (extend_result != 0)
+            CALLERROR("in constructor of Interpreter. extending global_env is failed %d.", extend_result);
 
         init_cores();
     }
@@ -184,6 +187,22 @@ namespace glaze {
     obj_t* Interpreter::eval(obj_t* obj)
     {
         return shared.evaluator->eval(obj, shared.global_env);
+    }
+
+    void Interpreter::error(const char* fname, unsigned int line, const char* fmt, ...)
+    {
+        va_list arg;
+        va_start(arg, fmt);
+
+        fprintf(stderr, "%s:%u !! ERROR in 'Interpreter' !! -- ", fname, line);
+        vfprintf(stderr, fmt, arg);
+        fprintf(stderr, "\n\n");
+
+        fflush(stderr);
+
+        va_end(arg);
+
+        throw "Interpreter Error !!";
     }
 
 }

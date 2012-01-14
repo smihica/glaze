@@ -612,7 +612,16 @@ namespace glaze {
     obj_t*
     evaluator_t::apply_compound_procedure(closure_t* proc, obj_t* args)
     {
-        proc->env()->extend(proc->param(), args);
+        int extend_result = proc->env()->extend(proc->param(), args);
+        if (extend_result != 0) {
+            char buf[1024];
+            proc->param()->print(buf, 1024);
+
+            CALLERROR("too %s arguments supplied -- EXTEND : proc \"%s\" requires %s",
+                      (extend_result == 1) ? "few" : "many",
+                      proc->name(),
+                      buf);
+        }
         obj_t* ret = eval_sequence(proc->body(), proc->env());
         proc->env()->enclose();
 
@@ -630,7 +639,17 @@ namespace glaze {
     obj_t*
     evaluator_t::expand_macro(macro_t* macro_fn, obj_t* exp)
     {
-        macro_fn->env()->extend(macro_fn->param(), exp);
+        int extend_result = macro_fn->env()->extend(macro_fn->param(), exp);
+        if (extend_result != 0) {
+            char buf[1024];
+            macro_fn->param()->print(buf, 1024);
+
+            CALLERROR("too %s arguments supplied -- EXTEND : macro \"%s\" requires %s",
+                      (extend_result == 1) ? "few" : "many",
+                      macro_fn->name(),
+                      buf);
+        }
+
         obj_t* ret = eval_sequence(macro_fn->body(), macro_fn->env());
         macro_fn->env()->enclose();
 
