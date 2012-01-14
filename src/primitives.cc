@@ -10,6 +10,72 @@ namespace glaze {
 
     namespace primitives {
 
+        obj_t* arc_eval(obj_t* args, Shared* shared)
+        {
+            if (NILP(args)) {
+                throw "wrong number of arguments. 'eval' expects 1";
+            }
+
+            obj_t* first = CAR(args);
+            obj_t* rest  = CDR(args);
+
+            if (!NILP(rest)) {
+                throw "wrong number of arguments. 'eval' expects 1";
+            }
+
+            return shared->evaluator->eval(first, shared->global_env);
+        }
+
+        obj_t* arc_apply(obj_t* args, Shared* shared)
+        {
+            if (NILP(args)) {
+                throw "wrong number of arguments. 'apply' expects 1 or more.";
+            }
+
+            obj_t* first = CAR(args);
+            obj_t* rest  = CDR(args);
+
+            if (!FUNCTIONP(first)) {
+                throw "wrong type of arguments. 'apply' expects the first argument of type <function>.";
+            }
+
+            if (NILP(rest)) {
+                return shared->evaluator->apply(reinterpret_cast<function_t*>(first), shared->_nil);
+            }
+
+            obj_t* apply_args = rest;
+
+            obj_t* pre_last_arg_cons = shared->_nil;
+            obj_t* last_arg_cons     = shared->_nil;
+            obj_t* last_arg          = shared->_nil;
+            while (!NILP(rest)) {
+                pre_last_arg_cons = last_arg_cons;
+                last_arg_cons = rest;
+                last_arg = CAR(rest);
+                rest = CDR(rest);
+            }
+
+            if (!(CONSP(last_arg) || NILP(last_arg))) {
+                throw "wrong type of arguments. 'apply' expects the last argument of type <cons> or nil.";
+            }
+
+            if (NILP(pre_last_arg_cons)) {
+                apply_args = last_arg;
+            } else {
+                // check last arg.
+                rest = last_arg;
+                while (!NILP(rest)) {
+                    if (!CONSP(rest)) throw "arguments list must be a plain <list> that closed by nil.";
+                    rest = CDR(rest);
+                }
+                reinterpret_cast<cons_t*>(pre_last_arg_cons)->set_cdr(last_arg);
+            }
+
+            return shared->evaluator->apply(reinterpret_cast<function_t*>(first), apply_args);
+
+        }
+
+
         obj_t* plus(obj_t* args, Shared* shared)
         {
             if (NILP(args)) {
@@ -549,6 +615,12 @@ namespace glaze {
                                std::vector<obj_t*>* values,
                                Shared* shared)
         {
+            variables->push_back(shared->symbols->get("eval"));
+            values->push_back(new subr_t("eval", (void*)arc_eval));
+
+            variables->push_back(shared->symbols->get("apply"));
+            values->push_back(new subr_t("apply", (void*)arc_apply));
+
             variables->push_back(shared->symbols->get("+"));
             values->push_back(new subr_t("+", (void*)plus));
 

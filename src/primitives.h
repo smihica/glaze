@@ -8,6 +8,8 @@
 namespace glaze {
     namespace primitives {
 
+        obj_t* arc_eval(obj_t* args, Shared* shared);
+        obj_t* arc_apply(obj_t* args, Shared* shared);
         obj_t* plus(obj_t* args, Shared* shared);
         obj_t* minus(obj_t* args, Shared* shared);
         obj_t* multiple(obj_t* args, Shared* shared);

@@ -149,8 +149,15 @@ namespace glaze {
         if (NILP(exps))
             return shared->_nil;
 
-        return new cons_t( eval(CAR(exps), env),
-                           list_of_values( CDR(exps), env));
+        if (CONSP(exps))
+            return new cons_t( eval(CAR(exps), env),
+                               list_of_values( CDR(exps), env));
+        {
+            char buf[1024];
+            exps->print(buf, 1024);
+
+            CALLERROR("arguments list must be a plain <list> that closed by nil -- LIST_OF_VALUES %s", buf);
+        }
     }
 
 
