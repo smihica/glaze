@@ -35,8 +35,11 @@ namespace glaze {
     ssize_t
     obj_t::print_proc(char* target, size_t size) const
     {
-        const char* str = "#<standard object>";
-        return snprintf(target, size, "%s", str);
+        int res = snprintf(target, size, "#<standard object>");
+        if (res < 0) CALLERROR("snprintf() failed.");
+        if (size <= res) return size - 1;
+
+        return res;
     }
 
     int
@@ -87,8 +90,11 @@ namespace glaze {
     ssize_t
     undef_t::print_proc(char* target, size_t size) const
     {
-        const char* str = "#<undef>";
-        return snprintf(target, size, "%s", str);
+        int res = snprintf(target, size, "#<undef>");
+        if (res < 0) CALLERROR("snprintf() failed.");
+        if (size <= res) return size - 1;
+
+        return res;
     }
 
 
@@ -117,8 +123,11 @@ namespace glaze {
     ssize_t
     nil_t::print_proc(char* target, size_t size) const
     {
-        const char* str = "nil";
-        return snprintf(target, size, "%s", str);
+        int res = snprintf(target, size, "nil");
+        if (res < 0) CALLERROR("snprintf() failed.");
+        if (size <= res) return size - 1;
+
+        return res;
     }
 
 /*
@@ -194,6 +203,108 @@ namespace glaze {
     }
 
     ssize_t
+    cons_t::print_list(int fd, bool top) const
+    {
+        ssize_t ret = 0;
+
+        if (top) {
+            if (fdprintf(fd, "(") < 0) CALLERROR("fdprintf() failed.");
+            ret++;
+        }
+
+        ret += m_car_ptr->print(fd);
+
+        int next_type = m_cdr_ptr->type();
+
+        if (next_type == (int)CONS)
+        {
+            if (fdprintf(fd, " ") < 0) CALLERROR("fdprintf() failed.");
+            ret++;
+            ret += ((cons_t*)m_cdr_ptr)->print_list(fd, false);
+        }
+        else if (next_type == (int)NIL)
+        {
+            // nothing to do.
+        }
+        else
+        {
+            if (fdprintf(fd, " . ") < 0) CALLERROR("fdprintf() failed.");
+            ret += 3;
+
+            ret += m_cdr_ptr->print(fd);
+        }
+
+        if (top)
+        {
+            if (fdprintf(fd, ")") < 0) CALLERROR("fdprintf() failed.");
+            ret++;
+        }
+
+        return ret;
+    }
+
+    ssize_t
+    cons_t::print_list(char* target, size_t size, bool top) const
+    {
+        ssize_t ret = 0;
+        int res = 0;
+
+        if (top) {
+            res = snprintf(target+ret, size, "(");
+            if (res < 0) CALLERROR("snprintf() failed.");
+            if (size <= res) return ret + (size - 1);
+            ret  += res;
+            size -= res;
+        }
+
+        res = m_car_ptr->print(target+ret, size);
+        ret += res;
+        size -= res;
+
+        int next_type = m_cdr_ptr->type();
+
+        if (next_type == (int)CONS)
+        {
+            res = snprintf(target+ret, size, " ");
+            if (res < 0) CALLERROR("snrintf() failed.");
+            if (size <= res) return ret + (size - 1);
+            ret  += res;
+            size -= res;
+
+            res = ((cons_t*)m_cdr_ptr)->print_list(target+ret, size, false);
+            ret  += res;
+            size -= res;
+        }
+        else if (next_type == (int)NIL)
+        {
+            // nothing to do.
+        }
+        else
+        {
+            res = snprintf(target+ret, size, " . ");
+            if (res < 0) CALLERROR("snrintf() failed.");
+            if (size <= res) return ret + (size - 1);
+            ret  += res;
+            size -= res;
+
+            res = m_cdr_ptr->print(target+ret, size);
+            ret  += res;
+            size -= res;
+        }
+
+        if (top)
+        {
+            res = snprintf(target+ret, size, ")");
+            if (res < 0) CALLERROR("snrintf() failed.");
+            if (size <= res) return ret + (size - 1);
+            ret  += res;
+            size -= res;
+        }
+
+        return ret;
+    }
+
+    ssize_t
     cons_t::print_proc(FILE* fp) const
     {
         return print_list(fp, true);
@@ -202,15 +313,13 @@ namespace glaze {
     ssize_t
     cons_t::print_proc(int fd) const
     {
-        const char* str = "#<cons>";
-        return fdprintf(fd, "%s", str);
+        return print_list(fd, true);
     }
 
     ssize_t
     cons_t::print_proc(char* target, size_t size) const
     {
-        const char* str = "#<cons>";
-        return snprintf(target, size, "%s", str);
+        return print_list(target, size, true);
     }
 
 
@@ -620,10 +729,11 @@ namespace glaze {
     string_t::print_proc(char* target, size_t size) const
     {
 
-        if (snprintf(target, size, "\"%s\"", m_ptr) < 0)
-            CALLERROR("snprintf() failed.");
+        int res = snprintf(target, size, "\"%s\"", m_ptr);
+        if (res < 0) CALLERROR("snprintf() failed.");
+        if (size <= res) return size - 1;
 
-        return m_len + 2;
+        return res;
     }
 
 
@@ -670,10 +780,11 @@ namespace glaze {
     ssize_t
     symbol_t::print_proc(char* target, size_t size) const
     {
-        if (snprintf(target, size, "%s", m_name) < 0)
-            CALLERROR("snprintf() failed.");
+        int res = snprintf(target, size, "%s", m_name);
+        if (res < 0) CALLERROR("snprintf() failed.");
+        if (size <= res) return size - 1;
 
-        return m_len;
+        return res;
     }
 
 
@@ -705,10 +816,11 @@ namespace glaze {
     ssize_t
     t_t::print_proc(char* target, size_t size) const
     {
-        if (snprintf(target, size, "t") < 0)
-            CALLERROR("snprintf() failed.");
+        int res = snprintf(target, size, "t");
+        if (res < 0) CALLERROR("snprintf() failed.");
+        if (size <= res) return size - 1;
 
-        return 1;
+        return res;
     }
 
 /*
@@ -742,7 +854,11 @@ namespace glaze {
     ssize_t
     subr_t::print_proc(char* target, size_t size) const
     {
-        return snprintf(target, size, "#<subr %s>", m_name);
+        int res = snprintf(target, size, "#<subr %s>", m_name);
+        if (res < 0) CALLERROR("snprintf() failed.");
+        if (size <= res) return size - 1;
+
+        return res;
     }
 
 /*
@@ -786,7 +902,11 @@ namespace glaze {
     ssize_t
     closure_t::print_proc(char* target, size_t size) const
     {
-        return snprintf(target, size, "#<closure %s>", m_name == NULL ? "#f" : m_name);
+        int res = snprintf(target, size, "#<closure %s>", m_name == NULL ? "#f" : m_name);
+        if (res < 0) CALLERROR("snprintf() failed.");
+        if (size <= res) return size - 1;
+
+        return res;
     }
 
 
@@ -831,7 +951,11 @@ namespace glaze {
     ssize_t
     macro_t::print_proc(char* target, size_t size) const
     {
-        return snprintf(target, size, "#<macro %s>", m_name == NULL ? "#f" : m_name);
+        int res = snprintf(target, size, "#<macro %s>", m_name == NULL ? "#f" : m_name);
+        if (res < 0) CALLERROR("snprintf() failed.");
+        if (size <= res) return size - 1;
+
+        return res;
     }
 
 }

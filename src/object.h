@@ -261,6 +261,7 @@ namespace glaze {
         ~subr_t();
 
         inline void* func() { return m_proc; }
+        inline const char* name() const { return m_name == NULL ? "#f" : m_name; };
 
     private:
         void* m_proc;
