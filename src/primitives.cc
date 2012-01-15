@@ -6,21 +6,46 @@
 #include "primitives.h"
 #include "symbol_table.h"
 
+#undef CALLERROR(...)
+#define CALLERROR(...) primitives_error(__FILE__, __LINE__, __VA_ARGS__)
+#define ERROR_STR_LEN 1024
+
 namespace glaze {
 
     namespace primitives {
 
+        void primitives_error(const char* fname, unsigned int line, const char* fmt, ...)
+        {
+            size_t i = 0;
+            char fname_buf[32];
+            size_t size = ERROR_STR_LEN;
+            char* buf = (char*)malloc(size);
+            *buf = 0;
+
+            remove_dir(fname, fname_buf, 32);
+
+            va_list arg;
+            va_start(arg, fmt);
+
+            i += snprintf(buf + i, size - i, "%s:%u -- ", fname_buf, line);
+            i += vsnprintf(buf + i, size - i, fmt, arg);
+
+            va_end(arg);
+
+            throw buf;
+        }
+
         obj_t* arc_eval(obj_t* args, Shared* shared)
         {
             if (NILP(args)) {
-                throw "wrong number of arguments. 'eval' expects 1";
+                CALLERROR("wrong number of arguments. 'eval' expects 1.");
             }
 
             obj_t* first = CAR(args);
             obj_t* rest  = CDR(args);
 
             if (!NILP(rest)) {
-                throw "wrong number of arguments. 'eval' expects 1";
+                CALLERROR("wrong number of arguments. 'eval' expects 1");
             }
 
             return shared->evaluator->eval(first, shared->global_env);
@@ -29,14 +54,14 @@ namespace glaze {
         obj_t* arc_apply(obj_t* args, Shared* shared)
         {
             if (NILP(args)) {
-                throw "wrong number of arguments. 'apply' expects 1 or more.";
+                CALLERROR("wrong number of arguments. 'apply' expects 1 or more.");
             }
 
             obj_t* first = CAR(args);
             obj_t* rest  = CDR(args);
 
             if (!FUNCTIONP(first)) {
-                throw "wrong type of arguments. 'apply' expects the first argument of type <function>.";
+                CALLERROR("wrong type of arguments. 'apply' expects the first argument of type <function>.");
             }
 
             if (NILP(rest)) {
@@ -56,7 +81,7 @@ namespace glaze {
             }
 
             if (!(CONSP(last_arg) || NILP(last_arg))) {
-                throw "wrong type of arguments. 'apply' expects the last argument of type <cons> or nil.";
+                CALLERROR("wrong type of arguments. 'apply' expects the last argument of type <cons> or nil.");
             }
 
             if (NILP(pre_last_arg_cons)) {
@@ -65,7 +90,7 @@ namespace glaze {
                 // check last arg.
                 rest = last_arg;
                 while (!NILP(rest)) {
-                    if (!CONSP(rest)) throw "arguments list must be a plain <list> that closed by nil.";
+                    if (!CONSP(rest)) CALLERROR("arguments must be a proper list.");
                     rest = CDR(rest);
                 }
                 reinterpret_cast<cons_t*>(pre_last_arg_cons)->set_cdr(last_arg);
@@ -83,8 +108,6 @@ namespace glaze {
                 return new number_t(z);
             }
 
-            if(!CONSP(args)) throw "invalid arg.";
-
             obj_t* first = CAR(args);
             obj_t* rest  = CDR(args);
 
@@ -96,7 +119,7 @@ namespace glaze {
 
                     first = CAR(rest);
 
-                    if (!NUMBERP(first)) throw "primitive procedure '+' some arguments are invalid.";
+                    if (!NUMBERP(first)) CALLERROR("primitive procedure '+' some arguments are invalid.");
 
                     *ret += *((number_t*)first);
 
@@ -112,7 +135,7 @@ namespace glaze {
                 while (!NILP(rest)) {
                     first = CAR(rest);
 
-                    if (!STRINGP(first)) throw "primitive procedure '+' some arguments are invalid.";
+                    if (!STRINGP(first)) CALLERROR("primitive procedure '+' some arguments are invalid.");
 
                     string_t* p = (string_t*)first;
                     *ret += *p;
@@ -123,7 +146,7 @@ namespace glaze {
                 return (obj_t*)ret;
             }
 
-            throw "primitive procedure '+' some arguments are invalid.";
+            CALLERROR("primitive procedure '+' some arguments are invalid.");
         }
 
         obj_t* minus(obj_t* args, Shared* shared)
@@ -142,7 +165,7 @@ namespace glaze {
                 while (!NILP(rest)) {
                     first = CAR(rest);
 
-                    if (!NUMBERP(first)) throw "primitive procedure '-' some arguments are invalid.";
+                    if (!NUMBERP(first)) CALLERROR("primitive procedure '-' some arguments are invalid.");
 
                     *ret -= *((number_t*)first);
 
@@ -152,7 +175,7 @@ namespace glaze {
 
             }
 
-            throw "primitive procedure '-' some arguments are invalid.";
+            CALLERROR("primitive procedure '-' some arguments are invalid.");
         }
 
         obj_t* multiple(obj_t* args, Shared* shared)
@@ -171,7 +194,7 @@ namespace glaze {
                 while (!NILP(rest)) {
                     first = CAR(rest);
 
-                    if (!NUMBERP(first)) throw "primitive procedure '*' some arguments are invalid.";
+                    if (!NUMBERP(first)) CALLERROR("primitive procedure '*' some arguments are invalid.");
 
                     *ret *= *((number_t*)first);
 
@@ -180,13 +203,13 @@ namespace glaze {
                 return (obj_t*)ret;
             }
 
-            throw "primitive procedure '*' some arguments are invalid.";
+            CALLERROR("primitive procedure '*' some arguments are invalid.");
         }
 
         obj_t* devide(obj_t* args, Shared* shared)
         {
             if (NILP(args)) {
-                throw "primitive procedure '/' requires at least one argument.";
+                CALLERROR("primitive procedure '/' requires at least one argument.");
             }
 
             obj_t* first = CAR(args);
@@ -198,7 +221,7 @@ namespace glaze {
                 while (!NILP(rest)) {
                     first = CAR(rest);
 
-                    if (!NUMBERP(first)) throw "primitive procedure '/' some arguments are invalid.";
+                    if (!NUMBERP(first)) CALLERROR("primitive procedure '/' some arguments are invalid.");
 
                     *ret /= *((number_t*)first);
 
@@ -207,7 +230,7 @@ namespace glaze {
                 return (obj_t*)ret;
             }
 
-            throw "primitive procedure '/' some arguments are invalid.";
+            CALLERROR("primitive procedure '/' some arguments are invalid.");
         }
 
         obj_t* equal(obj_t* args, Shared* shared)
@@ -215,8 +238,6 @@ namespace glaze {
             if (NILP(args)) {
                 return shared->t;
             }
-
-            if(!CONSP(args)) throw "invalid arg.";
 
             obj_t* first = CAR(args);
             obj_t* rest  = CDR(args);
@@ -278,8 +299,6 @@ namespace glaze {
                 return shared->t;
             }
 
-            if(!CONSP(args)) throw "invalid arg.";
-
             obj_t* first = CAR(args);
             obj_t* rest  = CDR(args);
 
@@ -292,7 +311,7 @@ namespace glaze {
                 do {
                     const number_t* n = (number_t*)first;
                     first = CAR(rest);
-                    if (!NUMBERP(first)) throw "primitive procedure '<' some arguments are invalid.";
+                    if (!NUMBERP(first)) CALLERROR("primitive procedure '<' some arguments are invalid.");
                     const number_t* n2 = (number_t*)first;
                     if (*n >= *n2) return shared->_nil;
                     rest = CDR(rest);
@@ -302,7 +321,7 @@ namespace glaze {
                 return shared->t;
             }
 
-            throw "primitive procedure '<' some arguments are invalid.";
+            CALLERROR("primitive procedure '<' some arguments are invalid.");
         }
 
         obj_t* smaller_than_or_equal(obj_t* args, Shared* shared)
@@ -310,8 +329,6 @@ namespace glaze {
             if (NILP(args)) {
                 return shared->t;
             }
-
-            if(!CONSP(args)) throw "invalid arg.";
 
             obj_t* first = CAR(args);
             obj_t* rest  = CDR(args);
@@ -325,7 +342,7 @@ namespace glaze {
                 do {
                     const number_t* n = (number_t*)first;
                     first = CAR(rest);
-                    if (!NUMBERP(first)) throw "primitive procedure '<=' some arguments are invalid.";
+                    if (!NUMBERP(first)) CALLERROR("primitive procedure '<=' some arguments are invalid.");
                     const number_t* n2 = (number_t*)first;
                     if (*n > *n2) return shared->_nil;
                     rest = CDR(rest);
@@ -335,7 +352,7 @@ namespace glaze {
                 return shared->t;
             }
 
-            throw "primitive procedure '<=' some arguments are invalid.";
+            CALLERROR("primitive procedure '<=' some arguments are invalid.");
         }
 
 
@@ -345,8 +362,6 @@ namespace glaze {
                 return shared->t;
             }
 
-            if(!CONSP(args)) throw "invalid arg.";
-
             obj_t* first = CAR(args);
             obj_t* rest  = CDR(args);
 
@@ -359,7 +374,7 @@ namespace glaze {
                 do {
                     const number_t* n = (number_t*)first;
                     first = CAR(rest);
-                    if (!NUMBERP(first)) throw "primitive procedure '>' some arguments are invalid.";
+                    if (!NUMBERP(first)) CALLERROR("primitive procedure '>' some arguments are invalid.");
                     const number_t* n2 = (number_t*)first;
                     if (*n <= *n2) return shared->_nil;
                     rest = CDR(rest);
@@ -369,7 +384,7 @@ namespace glaze {
                 return shared->t;
             }
 
-            throw "primitive procedure '>' some arguments are invalid.";
+            CALLERROR("primitive procedure '>' some arguments are invalid.");
         }
 
         obj_t* bigger_than_or_equal(obj_t* args, Shared* shared)
@@ -377,8 +392,6 @@ namespace glaze {
             if (NILP(args)) {
                 return shared->t;
             }
-
-            if(!CONSP(args)) throw "invalid arg.";
 
             obj_t* first = CAR(args);
             obj_t* rest  = CDR(args);
@@ -392,7 +405,7 @@ namespace glaze {
                 do {
                     const number_t* n = (number_t*)first;
                     first = CAR(rest);
-                    if (!NUMBERP(first)) throw "primitive procedure '>=' some arguments are invalid.";
+                    if (!NUMBERP(first)) CALLERROR("primitive procedure '>=' some arguments are invalid.");
                     const number_t* n2 = (number_t*)first;
                     if (*n < *n2) return shared->_nil;
                     rest = CDR(rest);
@@ -402,21 +415,21 @@ namespace glaze {
                 return shared->t;
             }
 
-            throw "primitive procedure '>=' some arguments are invalid.";
+            CALLERROR("primitive procedure '>=' some arguments are invalid.");
         }
 
 
         obj_t* no(obj_t* args, Shared* shared)
         {
             if (NILP(args)) {
-                throw "wrong number of arguments 'no' requires 1";
+                CALLERROR("wrong number of arguments 'no' requires 1");
             }
 
             obj_t* first = CAR(args);
             obj_t* rest  = CDR(args);
 
             if (!NILP(rest)) {
-                throw "wrong number of arguments 'no' requires 1";
+                CALLERROR("wrong number of arguments 'no' requires 1");
             }
 
             if (NILP(first)) {
@@ -429,14 +442,14 @@ namespace glaze {
         obj_t* car(obj_t* args, Shared* shared)
         {
             if (NILP(args)) {
-                throw "wrong number of arguments 'car' requires 1";
+                CALLERROR("wrong number of arguments 'car' requires 1");
             }
 
             obj_t* first = CAR(args);
             obj_t* rest  = CDR(args);
 
             if (!NILP(rest)) {
-                throw "wrong number of arguments 'car' requires 1";
+                CALLERROR("wrong number of arguments 'car' requires 1");
             }
 
             if (NILP(first)) {
@@ -447,21 +460,21 @@ namespace glaze {
                 return CAR(first);
             }
 
-            throw "'car' the argument is invalid.";
+            CALLERROR("'car' the argument is invalid.");
 
         }
 
         obj_t* cdr(obj_t* args, Shared* shared)
         {
             if (NILP(args)) {
-                throw "wrong number of arguments. 'cdr' expects 1";
+                CALLERROR("wrong number of arguments. 'cdr' expects 1");
             }
 
             obj_t* first = CAR(args);
             obj_t* rest  = CDR(args);
 
             if (!NILP(rest)) {
-                throw "wrong number of arguments. 'cdr' expects 1";
+                CALLERROR("wrong number of arguments. 'cdr' expects 1");
             }
 
             if (NILP(first)) {
@@ -472,14 +485,14 @@ namespace glaze {
                 return CDR(first);
             }
 
-            throw "'cdr' the argument is invalid.";
+            CALLERROR("'cdr' the argument is invalid.");
 
         }
 
         obj_t* cons(obj_t* args, Shared* shared)
         {
             if (NILP(args)) {
-                throw "wrong number of arguments. 'cons' expects 2, given 0.";
+                CALLERROR("wrong number of arguments. 'cons' expects 2, given 0.");
             }
 
             obj_t* first    = CAR(args);
@@ -489,22 +502,22 @@ namespace glaze {
                 obj_t* rest2 = CDR(rest);
 
                 if (!NILP(rest2)) {
-                    throw "wrong number of arguments. 'cons' expects 2, given 3 or more.";
+                    CALLERROR("wrong number of arguments. 'cons' expects 2, given 3 or more.");
                 }
 
                 return (new cons_t(first, CAR(rest)));
             }
 
-            throw "wrong number of arguments. 'cons' expects 2, given 1.";
+            CALLERROR("wrong number of arguments. 'cons' expects 2, given 1.");
         }
 
         obj_t* acons(obj_t* args, Shared* shared)
         {
             if (NILP(args)) {
-                throw "wrong number of arguments. 'acons' expects 1";
+                CALLERROR("wrong number of arguments. 'acons' expects 1");
 
             } else if (!NILP(CDR(args))) {
-                throw "wrong number of arguments. 'acons' expects 1, given 2 or more.";
+                CALLERROR("wrong number of arguments. 'acons' expects 1, given 2 or more.");
 
             }
 
@@ -537,31 +550,65 @@ namespace glaze {
             return ret;
         }
 
+        obj_t* len(obj_t* args, Shared* shared)
+        {
+            if (NILP(args)) {
+                CALLERROR("wrong number of arguments. 'len' expects 1");
+
+            } else if (!NILP(CDR(args))) {
+                CALLERROR("wrong number of arguments. 'len' expects 1, given 2 or more.");
+
+            }
+
+            obj_t* first = CAR(args);
+
+            if (NILP(first)) return new number_t((int64_t)0);
+
+            if (CONSP(first)) {
+                int64_t size = 0;
+                obj_t* rest = first;
+
+                while (!NILP(rest)) {
+                    if (!CONSP(rest)) {
+                        goto error_in_len;
+                    }
+                    rest = CDR(rest);
+                    size++;
+                }
+
+                return new number_t(size);
+            }
+
+        error_in_len:
+            {
+                char buf[256] = { 0 };
+                first->print(buf, 256);
+
+                CALLERROR("proper list required, but got %s", buf);
+            }
+        }
+
         obj_t* load(obj_t* args, Shared* shared)
         {
             if (NILP(args)) {
-                throw "wrong number of arguments 'load' requires 1";
+                CALLERROR("wrong number of arguments 'load' requires 1");
             }
 
             obj_t* first = CAR(args);
             obj_t* rest  = CDR(args);
 
             if (!NILP(rest)) {
-                throw "wrong number of arguments 'load' requires 1";
+                CALLERROR("wrong number of arguments 'load' requires 1");
             }
 
             if(!STRINGP(first))
-                throw "wrong type of argument 'load' requires string";
+                CALLERROR("wrong type of argument 'load' requires string");
 
             const char* fname = ((const string_t*)first)->c_str();
 
             int fd = open(fname, O_RDONLY);
             if ( fd < 0 ){
-                // TODO !!! memory leak !!!!
-                char* buf = (char*)malloc(64); *buf = 0;
-                snprintf(buf, 64, "the file couldn't open (%s)", strerror(errno));
-
-                throw buf;
+                CALLERROR("the file couldn't open (%s)", strerror(errno));
             }
 
             shared->reader->set_source(fd);
@@ -582,7 +629,7 @@ namespace glaze {
         obj_t* uniq(obj_t* args, Shared* shared)
         {
             if (!NILP(args)) {
-                throw "procedure ar-gensym: expects no arguments. given 1 or more.";
+                CALLERROR("procedure ar-gensym: expects no arguments. given 1 or more.");
             }
 
             // logical max is gs18446744073709551615
@@ -600,7 +647,7 @@ namespace glaze {
 
             if (!NILP(CDR(args))) {
                 // TODO output port.
-                throw "output definition is not surported yet. please wait.";
+                CALLERROR("output definition is not surported yet. please wait.");
             }
 
             obj_t* obj = CAR(args);
@@ -665,6 +712,9 @@ namespace glaze {
 
             variables->push_back(shared->symbols->get("list"));
             values->push_back(new subr_t("list", (void*)list));
+
+            variables->push_back(shared->symbols->get("len"));
+            values->push_back(new subr_t("len", (void*)len));
 
             variables->push_back(shared->symbols->get("load"));
             values->push_back(new subr_t("load", (void*)load));

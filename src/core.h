@@ -43,7 +43,6 @@ ssize_t fdprintf(int fd, const char *fmt, ...);
 #define READ_NUMBER_BUFFER_SIZE         256
 #define MAX_READ_SYMBOL_LENGTH          256
 
+void remove_dir(const char* fname, char* buf, size_t size);
 
 #endif // GLAZE__CORE_H_
-
-

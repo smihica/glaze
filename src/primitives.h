@@ -8,6 +8,10 @@
 namespace glaze {
     namespace primitives {
 
+        void primitives_error(const char* fname, unsigned int line, const char* fmt, ...);
+
+        // ---------
+
         obj_t* arc_eval(obj_t* args, Shared* shared);
         obj_t* arc_apply(obj_t* args, Shared* shared);
         obj_t* plus(obj_t* args, Shared* shared);
@@ -25,6 +29,7 @@ namespace glaze {
         obj_t* cons(obj_t* args, Shared* shared);
         obj_t* acons(obj_t* args, Shared* shared);
         obj_t* list(obj_t* args, Shared* shared);
+        obj_t* len(obj_t* args, Shared* shared);
         obj_t* load(obj_t* args, Shared* shared);
         obj_t* uniq(obj_t* args, Shared* shared);
         obj_t* disp(obj_t* args, Shared* shared);

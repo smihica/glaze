@@ -156,7 +156,7 @@ namespace glaze {
             char buf[1024];
             exps->print(buf, 1024);
 
-            CALLERROR("arguments list must be a plain <list> that closed by nil -- LIST_OF_VALUES %s", buf);
+            CALLERROR("arguments must be a proper list -- LIST_OF_VALUES %s", buf);
         }
     }
 
@@ -577,8 +577,9 @@ namespace glaze {
         if (is_primitive_procedure(proc)) {
             try {
                 return apply_primitive_procedure((subr_t*)proc, args);
-            } catch (const char* message) {
-                CALLERROR("primitive procedure -- APPLY %s", message);
+            } catch (char* message) {
+                CALLERROR("APPLY\n---- in primitive procedure '%s' -- %s", ((subr_t*)proc)->name(), message);
+                free(message);
             }
 
         } else if (is_compound_procedure(proc)) {
@@ -658,10 +659,13 @@ namespace glaze {
 
     void evaluator_t::error(const char* fname, unsigned int line, const char* fmt, ...)
     {
+        char fname_buf[32];
+        remove_dir(fname, fname_buf, 32);
+
         va_list arg;
         va_start(arg, fmt);
 
-        fprintf(stderr, "%s:%u !! ERROR in 'EVALUATOR' !! -- ", fname, line);
+        fprintf(stderr, "%s:%u !! ERROR in 'EVALUATOR' !! -- ", fname_buf, line);
         vfprintf(stderr, fmt, arg);
         fprintf(stderr, "\n\n");
 

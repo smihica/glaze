@@ -484,10 +484,13 @@ namespace glaze {
 
     void reader_t::error(const char* fname, unsigned int line, const char* fmt, ...)
     {
+        char fname_buf[32];
+        remove_dir(fname, fname_buf, 32);
+
         va_list arg;
         va_start(arg, fmt);
 
-        fprintf(stderr, "%s:%u !! ERROR in 'READER' !! -- ", fname, line);
+        fprintf(stderr, "%s:%u !! ERROR in 'READER' !! -- ", fname_buf, line);
         vfprintf(stderr, fmt, arg);
         fprintf(stderr, "\n\n");
 
