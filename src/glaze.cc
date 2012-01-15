@@ -189,6 +189,10 @@ namespace glaze {
         return shared.evaluator->eval(obj, shared.global_env);
     }
 
+    const symbol_t* Interpreter::get_symbol(const char* name) {
+        return shared.symbols->get(name);
+    }
+
     void Interpreter::error(const char* fname, unsigned int line, const char* fmt, ...)
     {
         char fname_buf[32];

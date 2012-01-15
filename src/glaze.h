@@ -32,6 +32,7 @@ namespace glaze {
         obj_t* read(const char* target, size_t* read_size);
 
         obj_t* eval(obj_t* obj);
+        const symbol_t* get_symbol(const char* name);
         void error(const char* fname, unsigned int line, const char* fmt, ...);
 
         Shared shared;
