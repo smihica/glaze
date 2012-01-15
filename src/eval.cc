@@ -219,14 +219,15 @@ namespace glaze {
         const symbol_t* sym;
 
         rest = CDR(exp);
-        if (NILP(rest)) goto error_eval_assignment;
+        if (NILP(rest) || !CONSP(rest)) goto error_eval_assignment;
 
-        second =  CADR(exp);
-        if (NILP(second) || (!is_variable(second))) goto error_eval_assignment;
+        second =  CAR(rest);
+        if (!is_variable(second)) goto error_eval_assignment;
 
-        third = CADDR(exp);
-        if (NILP(third)) goto error_eval_assignment;
+        rest = CDR(rest);
+        if (NILP(rest) || !CONSP(rest)) goto error_eval_assignment;
 
+        third = CAR(rest);
         ret = eval(third, env);
         sym = (const symbol_t*)second;
 
