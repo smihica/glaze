@@ -6,6 +6,12 @@
 
 (def cddr (x) (cdr (cdr x)))
 
+(def caddr (x) (car (cddr x)))
+
+(def cdddr (x) (cdr (cddr x)))
+
+(def cadddr (x) (car (cdddr x)))
+
 (def caris (x y)
   (and (acons x)
        (is (car x) y)))
@@ -35,7 +41,6 @@
         acc
         (iter (- n 1) (cdr lis) (cons (car lis) acc))))
   (rev (iter n lis nil)))
-
 
 (def nthcdr (n lis)
   (if (or (<= n 0) (no lis))
@@ -68,6 +73,10 @@
 ;          (set-cdr! x y)
 ;          (loop temp x))))
 ;  (loop x nil)))
+
+(def mappend (f xs)
+  (if xs
+      (append (f (car xs)) (mappend f (cdr xs)))))
 
 (def intersperse (x lis)
   (def iter (lis)
@@ -105,3 +114,30 @@
               nil
               (cons ,expr (,s_iter (- ,s_x 1)))))
         (,s_iter ,s_x)) ,x)))
+
+(def find (f x lis)
+  (if lis (if (f x (car lis)) x (find f x (cdr lis)))))
+
+(def rem (test seq)
+  (if seq
+      (if (is (car seq) test)
+          (rem test (cdr seq))
+          (cons (car seq) (rem test (cdr seq))))))
+
+(def union (f . liss)
+  (def iter (lis acc)
+    (if lis
+        (if (find f (car lis) acc)
+            (iter (cdr lis) acc)
+            (iter (cdr lis) (cons (car lis) acc)))
+        acc))
+  (if liss
+      (iter (car liss)
+            (apply union f (cdr liss)))))
+
+(def difference (f lis1 lis2)
+  (if lis1
+      (if (find f (car lis1) lis2)
+          (difference f (cdr lis1) lis2)
+          (cons (car lis1)
+                (difference f (cdr lis1) lis2)))))
