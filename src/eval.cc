@@ -451,7 +451,7 @@ namespace glaze {
         if (NILP(CDDR(exp))) goto error_eval_def1;
 
         third = CADDR(exp);
-        if (!(SYMBOLP(third) || CONSP(third))) {
+        if (!(CONSP(third) || NILP(third) || SYMBOLP(third))) {
             char buf[1024];
             exp->print(buf, 1024);
 
