@@ -37,6 +37,7 @@ namespace glaze {
     reader_t::~reader_t()
     {
         // nothing to do.
+        m_save.clear();
     }
 
     obj_t* reader_t::read()
@@ -98,6 +99,27 @@ namespace glaze {
         m_read = 0;
     }
 
+    void reader_t::save_state()
+    {
+        state now = { m_fd, m_fp, m_src, m_ungetbuf, m_ungetbuf_valid, m_read };
+        m_save.push_back(now);
+    }
+
+    void reader_t::resolv_state()
+    {
+        if (m_save.empty()) CALLERROR("state is not saved.");
+        state* last = &(m_save.back());
+
+        m_fd = last->fd;
+        m_fp = last->fp;
+        m_src = last->src;
+        m_ungetbuf = last->ungetbuf;
+        m_ungetbuf_valid = last->ungetbuf_valid;
+        m_read = last->read;
+
+        m_save.pop_back();
+    }
+
     void reader_t::init() {
 
         make_char_map();
@@ -118,6 +140,8 @@ namespace glaze {
         m_fd = -1;
         m_fp = NULL;
         m_src = NULL;
+
+        //m_save = new std::vector< state >();
 
         clean();
     }
@@ -162,7 +186,7 @@ namespace glaze {
                 if (errno == EINTR) {
                     goto get_top;
                 } else {
-                    CALLERROR("some error occured in get() errno -> %d", errno);
+                    CALLERROR("some error occured in get(). (%s)", strerror(errno));
                 }
             } else if (res == 0) {
                 c = EOF;

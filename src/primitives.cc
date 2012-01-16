@@ -611,6 +611,7 @@ namespace glaze {
                 CALLERROR("the file couldn't open (%s)", strerror(errno));
             }
 
+            shared->reader->save_state();
             shared->reader->set_source(fd);
 
             while(1) {
@@ -622,6 +623,7 @@ namespace glaze {
             }
 
             close(fd);
+            shared->reader->resolv_state();
 
             return shared->undef;
         }

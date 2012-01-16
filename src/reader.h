@@ -21,9 +21,23 @@ namespace glaze {
         void set_source(FILE* fp);
         void set_source(const char* src);
 
+        void save_state();
+        void resolv_state();
+
         obj_t* S_EOF;
 
     private:
+
+        typedef struct _state {
+            int         fd;
+            FILE*       fp;
+            const char* src;
+            int         ungetbuf;
+            bool        ungetbuf_valid;
+            size_t      read;
+        } state;
+
+        std::vector< state > m_save;
 
         // values
         Shared* shared;
@@ -32,7 +46,6 @@ namespace glaze {
         FILE* m_fp;
         const char* m_src;
 
-        int m_mode;
         size_t m_read;
 
         bool m_ungetbuf_valid;
