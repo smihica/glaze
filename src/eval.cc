@@ -199,7 +199,7 @@ namespace glaze {
     inline obj_t*
     evaluator_t::eval_quote(obj_t* exp, env_t* env)
     {
-        if (NILP(CDR(exp)) || !NILP(CDDR(exp))) {
+        if (NILP(CDR(exp)) || !CONSP(CDR(exp)) || !NILP(CDDR(exp))) {
             char buf[1024];
             exp->print(buf, 1024);
 
