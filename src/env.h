@@ -10,7 +10,7 @@ namespace glaze {
     typedef std::map< const uintptr_t,
                       obj_t*,
                       std::less<uintptr_t>,
-                      gc_allocator<std::pair<const uintptr_t, obj_t*> > > ptr_object_table_t;
+                      traceable_allocator<std::pair<const uintptr_t, obj_t*> > > ptr_object_table_t;
 
     class frame_t :
         public gc_cleanup /* using boehmGC */
@@ -53,7 +53,7 @@ namespace glaze {
 
         void error(const char* fname, unsigned int line, const char* fmt, ...);
 
-        const std::vector<frame_t*, gc_allocator<frame_t*> >& get_frames() const;
+        const std::vector<frame_t*, traceable_allocator<frame_t*> >& get_frames() const;
 
         enum extend_result {
             ARGUMENTS_RIGHT    = 0,
@@ -62,7 +62,7 @@ namespace glaze {
         };
 
     private:
-        std::vector<frame_t*, gc_allocator<frame_t*> > m_frames;
+        std::vector<frame_t*, traceable_allocator<frame_t*> > m_frames;
         Shared* shared;
 
     };

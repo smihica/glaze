@@ -120,7 +120,7 @@ namespace glaze {
         m_frames.clear();
     }
 
-    const std::vector<frame_t*, gc_allocator<frame_t*> >&
+    const std::vector<frame_t*, traceable_allocator<frame_t*> >&
     env_t::get_frames() const
     {
         return m_frames;
@@ -238,16 +238,31 @@ namespace glaze {
     obj_t*
     env_t::lookup(const symbol_t* variable)
     {
-        std::vector<frame_t*, gc_allocator<frame_t*> >::reverse_iterator it;
+//        fprintf(stderr, "lookup called!\n");
+//        fflush(stderr);
+
+        std::vector<frame_t*, traceable_allocator<frame_t*> >::reverse_iterator it;
         frame_t* f;
         obj_t* obj;
 
+//        fprintf(stderr, "0");
+//        fflush(stderr);
+
         for(it = m_frames.rbegin(); it != m_frames.rend(); it++)
         {
+//            fprintf(stderr, "1");
+//            fflush(stderr);
+
             f = (*it);
+
+//            fprintf(stderr, "2");
+//            fflush(stderr);
+
             obj = f->lookup(variable);
             if (obj != NULL) return obj;
         }
+
+
 
         char buf[1024];
         variable->print(buf, 1024);
@@ -260,7 +275,7 @@ namespace glaze {
     void
     env_t::set(const symbol_t* variable, obj_t* value)
     {
-        std::vector<frame_t*, gc_allocator<frame_t*> >::reverse_iterator it;
+        std::vector<frame_t*, traceable_allocator<frame_t*> >::reverse_iterator it;
         frame_t* f;
 
         for(it = m_frames.rbegin(); it != m_frames.rend(); it++)
@@ -278,7 +293,7 @@ namespace glaze {
     void
     env_t::assign(const symbol_t* variable, obj_t* value)
     {
-        std::vector<frame_t*, gc_allocator<frame_t*> >::reverse_iterator it;
+        std::vector<frame_t*, traceable_allocator<frame_t*> >::reverse_iterator it;
         frame_t* f;
 
         for(it = m_frames.rbegin(); it != m_frames.rend(); it++)
@@ -297,7 +312,7 @@ namespace glaze {
     void
     env_t::unbind(const symbol_t* variable)
     {
-        std::vector<frame_t*, gc_allocator<frame_t*> >::reverse_iterator it;
+        std::vector<frame_t*, traceable_allocator<frame_t*> >::reverse_iterator it;
         frame_t* f;
 
         for(it = m_frames.rbegin(); it != m_frames.rend(); it++)
