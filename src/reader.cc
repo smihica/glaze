@@ -165,6 +165,7 @@ namespace glaze {
     int reader_t::get() {
         if (m_ungetbuf_valid) {
             m_ungetbuf_valid = false;
+            m_read++;
             return m_ungetbuf;
 
         } else {
@@ -210,6 +211,7 @@ namespace glaze {
 
     inline void reader_t::unget() {
         m_ungetbuf_valid = true;
+        m_read--;
     }
 
     size_t reader_t::read_thing(char* buf, size_t size)
@@ -217,7 +219,7 @@ namespace glaze {
         size_t i = 0;
         while (i + 1 < size) {
             int c = lookahead();
-            if (c == EOF) {
+            if (c == 0 || c == EOF) {
                 buf[i] = 0;
                 return i;
             }
@@ -437,7 +439,7 @@ namespace glaze {
     top:
         c = get();
 
-        if (c == EOF) return S_EOF;
+        if (c == 0 || c == EOF) return S_EOF;
         if (c > 0x007F)  CALLERROR("invalid character. c = %d at %d", c, m_read);
 
         if (whitespace_p(c)) goto top;
