@@ -24,7 +24,8 @@ namespace glaze {
         int repl(FILE* fp_in, int fd_out);
         int repl(int fd_in, FILE* fp_out);
         int repl(int fd_in, int fd_out);
-        int read_and_evaluate(const char* src);
+
+        obj_t* read_and_evaluate(const char* src);
 
         obj_t* read();
         obj_t* read(FILE* fp);

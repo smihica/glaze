@@ -140,7 +140,7 @@ namespace glaze {
         return 0;
     }
 
-    int Interpreter::read_and_evaluate(const char* src)
+    obj_t* Interpreter::read_and_evaluate(const char* src)
     {
         obj_t* read_result;
         obj_t* eval_result;
@@ -161,7 +161,7 @@ namespace glaze {
             goto retry;
         }
 
-        return 0;
+        return eval_result;
     }
 
     obj_t* Interpreter::read()
