@@ -10,7 +10,17 @@
 
 namespace glaze {
 
-    class Config {};
+    class Config {
+    public:
+        Config(bool require_gc_init=true) {
+            m_require_gc_init = require_gc_init;
+        };
+
+        bool m_require_gc_init;
+        bool require_gc_init() { return m_require_gc_init; };
+        bool require_gc_init(bool cond) { m_require_gc_init = cond; return cond; };
+
+    };
 
     class Interpreter
     {

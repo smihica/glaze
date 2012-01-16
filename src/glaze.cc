@@ -12,7 +12,9 @@ namespace glaze {
 
     Interpreter::Interpreter(Config* conf) : m_initialized(false)
     {
-        GC_INIT();
+        if (conf->require_gc_init()) {
+            GC_INIT();
+        }
 
         shared._nil     = new nil_t();
         shared.t        = new t_t();
@@ -142,9 +144,9 @@ namespace glaze {
 
     obj_t* Interpreter::read_and_evaluate(const char* src)
     {
-        obj_t* read_result;
-        obj_t* eval_result;
-        size_t read_size_1;
+        obj_t* read_result = shared.undef;
+        obj_t* eval_result = shared.undef;
+        size_t read_size_1 = 0;
         size_t read_size = 0;
 
     retry:
