@@ -52,12 +52,13 @@ namespace glaze {
     {
         if (m_initialized) return;
 
-        const int core_len = 4;
+        const int core_len = 5;
         const char* core_libs[core_len] = {
 #include "arc/base.arc.core"
 #include "arc/qq.arc.core"
 #include "arc/list.arc.core"
 #include "arc/math.arc.core"
+#include "arc/compiler.arc.core"
         };
 
         for (int i = 0; i < core_len; i++ ){

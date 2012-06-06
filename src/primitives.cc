@@ -100,6 +100,41 @@ namespace glaze {
 
         }
 
+        obj_t* compile(obj_t* args, Shared* shared)
+        {
+            const symbol_t* compile_sym = shared->symbols->get("compile-arc");
+            obj_t* proc = shared->global_env->lookup(compile_sym);
+
+            if (proc == NULL)
+                CALLERROR("function (compile-arc x...) is not defined.");
+
+            if (!CLOSUREP(proc))
+                CALLERROR("symbol 'compile-arc must be an arc function.");
+
+            if (NILP(args))
+                CALLERROR("primitive procedure 'compile' expects an argument but no.");
+
+            obj_t* target_fn_sym = CAR(args);
+
+            if (!SYMBOLP(target_fn_sym))
+                CALLERROR("primitive procedure 'compile' expects a symbol.");
+
+            obj_t* target_fn = shared->global_env->lookup((const symbol_t*)target_fn_sym);
+
+            if (target_fn == NULL)
+                CALLERROR("target function is not defined.");
+
+            if (!CLOSUREP(target_fn))
+                CALLERROR("%s must be an arc function.", ((const symbol_t*)target_fn_sym)->name());
+
+            closure_t* target = (closure_t*)target_fn;
+
+            args = (new cons_t(target->param(), new cons_t(target->body(), shared->_nil)));
+
+            shared->evaluator->apply_compound_procedure((closure_t*)proc, args);
+
+            return shared->undef;
+        }
 
         obj_t* plus(obj_t* args, Shared* shared)
         {
@@ -643,21 +678,42 @@ namespace glaze {
 
         obj_t* disp(obj_t* args, Shared* shared)
         {
-            if (NILP(args)) {
-                return shared->_nil;
-            }
+            if (NILP(args))
+                return shared->undef;
 
+            /*
             if (!NILP(CDR(args))) {
                 // TODO output port.
                 CALLERROR("output definition is not surported yet. please wait.");
             }
+            */
 
-            obj_t* obj = CAR(args);
+            obj_t* first = CAR(args);
+            obj_t* obj   = first;
+            obj_t* rest  = args;
 
-            // TODO display function.
-            // obj->disp();
+            while (!NILP(rest)) {
+                if (!CONSP(rest)) {
+                    goto error_in_disp;
+                }
+                obj = CAR(rest);
+                obj->print(stdout);
+                fprintf(stdout, " ");
+                rest = CDR(rest);
+            }
 
-            return shared->_nil;
+            fprintf(stdout, "\n");
+
+            return shared->undef;
+
+        error_in_disp:
+            {
+                char buf[256] = { 0 };
+                first->print(buf, 256);
+
+                CALLERROR("proper list required, but got %s", buf);
+            }
+
         }
 
         void setup_primitives( std::vector<const symbol_t*>* variables,
@@ -669,6 +725,9 @@ namespace glaze {
 
             variables->push_back(shared->symbols->get("apply"));
             values->push_back(new subr_t("apply", (void*)arc_apply));
+
+            variables->push_back(shared->symbols->get("compile"));
+            values->push_back(new subr_t("compile", (void*)compile));
 
             variables->push_back(shared->symbols->get("+"));
             values->push_back(new subr_t("+", (void*)plus));

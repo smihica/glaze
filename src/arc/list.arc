@@ -55,8 +55,19 @@
       (car lis)
       (last (cdr lis))))
 
-;; TODO optional parameter
-(def flat (lis . depth))
+(= alist acons)
+(def flat arg
+  (def iter (l d)
+    (if (and (no (is l nil)) (< 0 d))
+        (let i (car l)
+          (append
+            (if (alist i)
+                (iter i (- d 1))
+                (list i))
+            (iter (cdr l) d)))
+        l))
+  (iter (car arg) (or (cadr arg) 10000)))
+
 
 (def rev (lis)
   (def iter (lis acc)

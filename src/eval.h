@@ -18,6 +18,9 @@ namespace glaze {
         obj_t* eval(obj_t* exp, env_t* env);
         obj_t* apply(function_t* proc, obj_t* args);
 
+        // temp putting here
+        obj_t* apply_compound_procedure(closure_t* proc, obj_t* args);
+
         enum special_t {
             NOT_SPECIAL     = 0,
             QUOTED          = 1,
@@ -60,7 +63,6 @@ namespace glaze {
 
         // apply
         obj_t* apply_primitive_procedure(subr_t* proc, obj_t* args);
-        obj_t* apply_compound_procedure(closure_t* proc, obj_t* args);
 
         inline bool is_primitive_procedure(const function_t* proc);
         inline bool is_compound_procedure(const function_t* proc);
