@@ -32,6 +32,7 @@ namespace glaze {
             SUBR        = 8,
             CLOSURE     = 9,
             MACRO       = 10,
+            SYNTAX      = 11,
         };
         int type() const;
     protected:
@@ -140,16 +141,15 @@ namespace glaze {
         number_t& operator*=(const number_t& n);
         number_t& operator/=(const number_t& n);
 
+        enum number_type {
+            FIXNUM = 0, FLOAT = 1
+        };
 
         const inline int get_number_type() const { return (int)m_number_type; }
         const inline int64_t get_fixnum() const { return m_value.fixnum; }
         const inline double  get_floatnum() const { return m_value.floatnum; }
 
     private:
-        enum number_type {
-            FIXNUM = 0, FLOAT = 1
-        };
-
         union value {
             int64_t  fixnum;
             double   floatnum;
@@ -331,6 +331,27 @@ namespace glaze {
     };
 
 #define MACROP(obj) ((int)(obj->type()) == (int)(obj_t::MACRO))
+
+/*
+** syntax_t
+*/
+    class syntax_t :
+        public obj_t {
+    public:
+        syntax_t(const char* name);
+        ~syntax_t();
+
+        inline const char* name() const { return m_name; };
+
+    private:
+        char* m_name;
+
+        virtual ssize_t print_proc(FILE* fp) const;
+        virtual ssize_t print_proc(int fd) const;
+        virtual ssize_t print_proc(char* target, size_t size) const;
+    };
+
+#define SYNTAXP(obj) ((int)(obj->type()) == (int)(obj_t::SYNTAX))
 
 }
 

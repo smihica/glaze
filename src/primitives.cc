@@ -495,7 +495,11 @@ namespace glaze {
                 return CAR(first);
             }
 
-            CALLERROR("'car' the argument is invalid.");
+            size_t size = 256;
+            char* buf = (char*)malloc(size);
+            *buf = 0;
+            first->print(buf, size);
+            CALLERROR("'car' the argument is invalid. given %s", buf);
 
         }
 
@@ -697,12 +701,15 @@ namespace glaze {
                     goto error_in_disp;
                 }
                 obj = CAR(rest);
+
+                if (STRINGP(obj))
+                    ((string_t*)obj)->display(stdout);
+
                 obj->print(stdout);
                 fprintf(stdout, " ");
                 rest = CDR(rest);
             }
-
-            fprintf(stdout, "\n");
+            fflush(stdout);
 
             return shared->undef;
 
@@ -714,6 +721,47 @@ namespace glaze {
                 CALLERROR("proper list required, but got %s", buf);
             }
 
+        }
+
+        obj_t* type(obj_t* args, Shared* shared)
+        {
+            if (NILP(args))
+                CALLERROR("type expects 1 argument but no.");
+
+            obj_t* first  = CAR(args);
+
+            switch ((int)first->type())
+            {
+            case obj_t::NIL:
+            case obj_t::T:
+            case obj_t::SYMBOL:
+                return const_cast<symbol_t*>(shared->symbols->get("sym"));
+
+            case obj_t::UNDEF:
+                return const_cast<symbol_t*>(shared->symbols->get("undef"));
+
+            case obj_t::CONS:
+                return const_cast<symbol_t*>(shared->symbols->get("cons"));
+
+            case obj_t::NUMBER:
+                if (((number_t*)first)->get_number_type() == number_t::FIXNUM)
+                    return const_cast<symbol_t*>(shared->symbols->get("int"));
+                else
+                    return const_cast<symbol_t*>(shared->symbols->get("float"));
+
+            case obj_t::STRING:
+                return const_cast<symbol_t*>(shared->symbols->get("string"));
+
+            case obj_t::SUBR:
+            case obj_t::CLOSURE:
+                return const_cast<symbol_t*>(shared->symbols->get("fn"));
+
+            case obj_t::MACRO:
+                return const_cast<symbol_t*>(shared->symbols->get("mac"));
+
+            default:
+                CALLERROR("unknown type");
+            }
         }
 
         void setup_primitives( std::vector<const symbol_t*>* variables,
@@ -785,6 +833,33 @@ namespace glaze {
 
             variables->push_back(shared->symbols->get("disp"));
             values->push_back(new subr_t("disp", (void*)disp));
+
+            variables->push_back(shared->symbols->get("type"));
+            values->push_back(new subr_t("type", (void*)type));
+
+            // syntax
+            variables->push_back(shared->symbols->get("if"));
+            values->push_back(new syntax_t("if"));
+            variables->push_back(shared->symbols->get("quote"));
+            values->push_back(new syntax_t("quote"));
+            variables->push_back(shared->symbols->get("set"));
+            values->push_back(new syntax_t("set"));
+            variables->push_back(shared->symbols->get("if"));
+            values->push_back(new syntax_t("if"));
+            variables->push_back(shared->symbols->get("fn"));
+            values->push_back(new syntax_t("fn"));
+            variables->push_back(shared->symbols->get("def"));
+            values->push_back(new syntax_t("def"));
+            variables->push_back(shared->symbols->get("%nameless_mac"));
+            values->push_back(new syntax_t("%nameless_mac"));
+            variables->push_back(shared->symbols->get("mac"));
+            values->push_back(new syntax_t("mac"));
+            variables->push_back(shared->symbols->get("do"));
+            values->push_back(new syntax_t("do"));
+            variables->push_back(shared->symbols->get("and"));
+            values->push_back(new syntax_t("and"));
+            variables->push_back(shared->symbols->get("or"));
+            values->push_back(new syntax_t("or"));
 
             return;
         }

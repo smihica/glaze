@@ -961,4 +961,41 @@ namespace glaze {
         return res;
     }
 
+/*
+** syntax_t
+*/
+    syntax_t::syntax_t(const char* name)
+    {
+        m_type = SYNTAX;
+        m_name = (char*)realloc(m_name, strlen(name)+1);
+        memcpy(m_name, name, strlen(name)+1);
+    }
+
+    syntax_t::~syntax_t()
+    {
+        free(m_name);
+    }
+
+    ssize_t
+    syntax_t::print_proc(FILE* fp) const
+    {
+        return fprintf(fp, "#<special-syntax %s>", m_name);
+    }
+
+    ssize_t
+    syntax_t::print_proc(int fd) const
+    {
+        return fdprintf(fd, "#<special-syntax %s>", m_name);
+    }
+
+    ssize_t
+    syntax_t::print_proc(char* target, size_t size) const
+    {
+        int res = snprintf(target, size, "#<special-syntax %s>", m_name);
+        if (res < 0) CALLERROR("snprintf() failed.");
+        if (size <= res) return size - 1;
+
+        return res;
+    }
+
 }
