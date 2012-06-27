@@ -152,3 +152,9 @@
           (difference f (cdr lis1) lis2)
           (cons (car lis1)
                 (difference f (cdr lis1) lis2)))))
+
+(def intersection (f lis1 lis2)
+  (if lis1
+      (if (find f (car lis1) lis2)
+          (cons (car lis1) (intersection f (cdr lis1) lis2))
+          (intersection f (cdr lis1) lis2))))

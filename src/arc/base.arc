@@ -55,3 +55,5 @@
          ,(if (nthcdr 3 exps)
               `(aif ,@(nthcdr 2 exps))
               (nth 2 exps)))))
+
+(def isa (a b) (is (type a) b))
