@@ -700,14 +700,18 @@ namespace glaze {
                 if (!CONSP(rest)) {
                     goto error_in_disp;
                 }
+
                 obj = CAR(rest);
 
                 if (STRINGP(obj))
                     ((string_t*)obj)->display(stdout);
-
-                obj->print(stdout);
-                fprintf(stdout, " ");
+                else
+                    obj->print(stdout);
                 rest = CDR(rest);
+
+                if (!NILP(rest))
+                    fprintf(stdout, " ");
+
             }
             fflush(stdout);
 
