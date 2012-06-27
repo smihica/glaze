@@ -689,6 +689,41 @@ namespace glaze {
         m_len = strlen(m_ptr);
     }
 
+    ssize_t string_t::display(FILE* fp) const
+    {
+        ssize_t i;
+        size_t len = strlen(m_ptr);
+        bool escape = false;
+
+        for (i=0; i<len; i++) {
+            char c = *(m_ptr+i);
+            if (c == '\\') {
+                if (escape) {
+                    fprintf(fp, "%c", '\\');
+                } else {
+                    escape = true;
+                }
+                continue;
+            }
+            if (escape) {
+                switch (c) {
+                case 'n':
+                    fprintf(fp, "%c", '\n');
+                    break;
+                case 't':
+                    fprintf(fp, "%c", '\t');
+                case 's':
+                    fprintf(fp, "%c", '\s');
+                }
+            } else {
+                fprintf(fp, "%c", c);
+            }
+            escape = false;
+        }
+
+        return i;
+    }
+
     ssize_t
     string_t::print_proc(FILE* fp) const
     {

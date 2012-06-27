@@ -192,6 +192,8 @@ namespace glaze {
         inline const char* c_str() const { return m_ptr; }
         inline const size_t len() const { return m_len; }
 
+        ssize_t display(FILE* fp) const;
+
     private:
         char* m_ptr;
         size_t m_len;
