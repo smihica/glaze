@@ -2,7 +2,7 @@
 
 #ifndef __linux__
 
-ssize_t fdprintf(int fd, const char *fmt, ...) {
+int fdprintf(int fd, const char *fmt, ...) {
     va_list ap;
     FILE *f = fdopen(fd, "a");
     int rc;

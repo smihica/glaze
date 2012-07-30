@@ -5,5 +5,9 @@ TODO
 tmp/
 build/
 autom4te.cache/
-src/arc/*.core
+src/lib/*.core
+glaze
+doc
+memo
+src/lib
 

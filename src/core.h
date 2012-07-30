@@ -19,25 +19,31 @@
 #define array_sizeof(a) ((int)(sizeof(a)/sizeof(a[0])))
 #define CALLERROR(...) error(__FILE__, __LINE__, __VA_ARGS__)
 
+#define REQUIRE_GC_
+
+#ifdef REQUIRE_GC_
+
 #define GC_DEBUG
+#define CHECK_LEAKS() GC_gcollect()
 
 #ifdef __linux__
 #include <gc/gc.h>
 #include <gc/gc_cpp.h>
 #include <gc/gc_allocator.h>
-
-#define fdprintf(...) dprintf(__VA_ARGS__)
-
 #else // freebsd or MacOS
 #include <gc.h>
 #include <gc_cpp.h>
 #include <gc/gc_allocator.h>
-
-ssize_t fdprintf(int fd, const char *fmt, ...);
+int fdprintf(int fd, const char *fmt, ...);
 #endif
 
-/* for BoehmGC */
-#define CHECK_LEAKS() GC_gcollect()
+#endif // REQUIRE_GC_
+
+#ifdef __linux__
+#define fdprintf(...) dprintf(__VA_ARGS__)
+#else // freebsd or MacOS
+int fdprintf(int fd, const char *fmt, ...);
+#endif
 
 #define READ_STRING_SMALL_BUFFER_SIZE   1024
 #define READ_NUMBER_BUFFER_SIZE         256

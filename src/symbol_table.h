@@ -5,17 +5,16 @@
 
 namespace glaze {
 
-    class symbol_table {
+    class SymbolTable {
     public:
-        symbol_table() {};
-        ~symbol_table();
-        const symbol_t* get(const char* name);
-        void      clear();
-        void      print();
+        SymbolTable() {};
+        ~SymbolTable() { clear(); };
+        const Symbol* get(const char* name);
+        void clear();
+        void print();
 
     private:
-        std::map<std::string, const symbol_t*> m_table;
-
+        std::map<std::string, const Symbol*> m_table;
     };
 
 }

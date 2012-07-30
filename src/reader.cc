@@ -3,69 +3,55 @@
 #include "reader.h"
 #include "symbol_table.h"
 
-#define CHAR_MAP_SYMBOL         0x01
-#define CHAR_MAP_INITIAL        0x02
-#define CHAR_MAP_DELIMITER      0x04
-
-#define SYMBOL_CHARP(x)         ((s_char_map[x] & CHAR_MAP_SYMBOL) != 0)
-#define INITIAL_CHARP(x)        ((s_char_map[x] & CHAR_MAP_INITIAL) != 0)
-#define DELIMITER_CHARP(x)      ((s_char_map[x] & CHAR_MAP_DELIMITER) != 0)
-
 namespace glaze {
 
-    bool reader_t::s_char_map_ready;
-    uint8_t reader_t::s_char_map[128];
+    Object* Reader::S_EOF;
+    Object* Reader::S_DOT;
+    Object* Reader::S_LPAREN;
+    Object* Reader::S_RPAREN;
+    Object* Reader::S_LBRACK;
+    Object* Reader::S_RBRACK;
+    Object* Reader::S_QUOTE;
+    Object* Reader::S_QUASIQUOTE;
+    Object* Reader::S_UNQUOTE;
+    Object* Reader::S_UNQUOTE_SPLICING;
 
-    void
-    reader_t::make_char_map()
+    Reader::Reader() : symbol_table()
     {
-        if (s_char_map_ready) return;
-        for (int i = 1; i < array_sizeof(s_char_map); i++) {
-            s_char_map[i]  = ((isalnum(i) || strchr(".!?*+-/:<=>$%&@^_~", i)) ? CHAR_MAP_SYMBOL : 0);
-            s_char_map[i] |= ((isalpha(i) || strchr("!?*/:<=>$%&^_~", i)) ? CHAR_MAP_INITIAL : 0);
-            s_char_map[i] |= (strchr("()[]\";#", i) ? CHAR_MAP_DELIMITER : 0);
-        }
-        s_char_map_ready = true;
-    }
-
-    reader_t::reader_t(Shared* sh)
-    {
-        shared = sh;
         init();
     }
 
-    reader_t::~reader_t()
+    Reader::~Reader()
     {
-        // nothing to do.
         m_save.clear();
     }
 
-    obj_t* reader_t::read()
+    Object* Reader::read()
     {
         return read_expr();
     }
 
-    obj_t* reader_t::read(int fd)
+    Object* Reader::read(int fd)
     {
         set_source(fd);
         return read_expr();
     }
 
-    obj_t* reader_t::read(FILE* fp)
+    Object* Reader::read(FILE* fp)
     {
         set_source(fp);
         return read_expr();
     }
 
-    obj_t* reader_t::read(const char* src, size_t* read_size)
+    Object* Reader::read(const char* src, size_t* read_size)
     {
         set_source(src);
-        obj_t* ret = read_expr();
+        Object* ret = read_expr();
         (*read_size) = m_read;
         return ret;
     }
 
-    void reader_t::set_source(int fd)
+    void Reader::set_source(int fd)
     {
         clean();
 
@@ -74,7 +60,7 @@ namespace glaze {
         m_src = NULL;
     }
 
-    void reader_t::set_source(FILE* fp)
+    void Reader::set_source(FILE* fp)
     {
         clean();
 
@@ -83,7 +69,7 @@ namespace glaze {
         m_src = NULL;
     }
 
-    void reader_t::set_source(const char* src)
+    void Reader::set_source(const char* src)
     {
         clean();
 
@@ -92,23 +78,23 @@ namespace glaze {
         m_src = src;
     }
 
-    void reader_t::clean()
+    void Reader::clean()
     {
         m_ungetbuf = EOF;
         m_ungetbuf_valid = false;
         m_read = 0;
     }
 
-    void reader_t::save_state()
+    void Reader::save_state()
     {
-        state now = { m_fd, m_fp, m_src, m_ungetbuf, m_ungetbuf_valid, m_read };
+        Reader::state now = { m_fd, m_fp, m_src, m_ungetbuf, m_ungetbuf_valid, m_read };
         m_save.push_back(now);
     }
 
-    void reader_t::resolv_state()
+    void Reader::resolv_state()
     {
         if (m_save.empty()) CALLERROR("state is not saved.");
-        state* last = &(m_save.back());
+        Reader::state* last = &(m_save.back());
 
         m_fd = last->fd;
         m_fp = last->fp;
@@ -120,28 +106,27 @@ namespace glaze {
         m_save.pop_back();
     }
 
-    void reader_t::init() {
+    void Reader::init() {
 
-        make_char_map();
+#define MKSYM(NAME, STRING) NAME = make_symbol(STRING)
 
-#define mksymbol(NAME, STRING) NAME = make_symbol(STRING)
+        // MKSYM(S_EOF, "t");
+        // MKSYM(S_EOF, "nil");
 
-        mksymbol(S_EOF, "");
-        mksymbol(S_DOT, ".");
-        mksymbol(S_LPAREN, "(");
-        mksymbol(S_RPAREN, ")");
-        mksymbol(S_LBRACK, "[");
-        mksymbol(S_RBRACK, "]");
-        mksymbol(S_QUOTE,  "quote");
-        mksymbol(S_QUASIQUOTE, "quasiquote");
-        mksymbol(S_UNQUOTE, "unquote");
-        mksymbol(S_UNQUOTE_SPLICING, "unquote-splicing");
+        MKSYM(S_EOF, "");
+        MKSYM(S_DOT, ".");
+        MKSYM(S_LPAREN, "(");
+        MKSYM(S_RPAREN, ")");
+        MKSYM(S_LBRACK, "[");
+        MKSYM(S_RBRACK, "]");
+        MKSYM(S_QUOTE,  "quote");
+        MKSYM(S_QUASIQUOTE, "quasiquote");
+        MKSYM(S_UNQUOTE, "unquote");
+        MKSYM(S_UNQUOTE_SPLICING, "unquote-splicing");
 
         m_fd = -1;
         m_fp = NULL;
         m_src = NULL;
-
-        //m_save = new std::vector< state >();
 
         clean();
     }
@@ -150,19 +135,19 @@ namespace glaze {
 //
 // util
 //
-    inline bool reader_t::whitespace_p(int c) {
+    inline bool Reader::whitespace_p(int c) {
         return (c == 0x0020 || (0x0009 <= c && c <= 0x000d));
     }
 
-    bool
-    reader_t::delimited(int c)
+    bool Reader::delimited(int c)
     {
         if (whitespace_p(c)) return true;
         if (c > 127) CALLERROR("invalid character %U while reading identifier", c);
         return DELIMITER_CHARP(c);
     }
 
-    int reader_t::get() {
+    int Reader::get()
+    {
         if (m_ungetbuf_valid) {
             m_ungetbuf_valid = false;
             m_read++;
@@ -200,7 +185,7 @@ namespace glaze {
         }
     }
 
-    int reader_t::lookahead()
+    int Reader::lookahead()
     {
         if (m_ungetbuf_valid) return m_ungetbuf;
 
@@ -209,12 +194,13 @@ namespace glaze {
         return ch;
     }
 
-    inline void reader_t::unget() {
+    inline void Reader::unget()
+    {
         m_ungetbuf_valid = true;
         m_read--;
     }
 
-    size_t reader_t::read_thing(char* buf, size_t size)
+    size_t Reader::read_thing(char* buf, size_t size)
     {
         size_t i = 0;
         while (i + 1 < size) {
@@ -234,13 +220,11 @@ namespace glaze {
         CALLERROR("token buffer overflow while reading identifier, %s ...", buf);
     }
 
+    // Object Readers
 
-//
-// number
-//
-    obj_t* reader_t::make_number(const char* buf, size_t len)
+    Object* Reader::make_number(const char* buf, size_t len)
     {
-        number_t* ret = new number_t();
+        Number* ret = new Number();
 
         bool floated = false;
 
@@ -259,13 +243,12 @@ namespace glaze {
         return ret;
     }
 
-    obj_t* reader_t::read_number()
+    Object* Reader::read_number()
     {
         char buf[READ_NUMBER_BUFFER_SIZE];
         size_t len = read_thing(buf, sizeof(buf));
 
-        if (len == 0)
-            return S_EOF;
+        if (len == 0) return S_EOF;
 
         if (len == 1 && buf[0] == '.') return S_DOT;
         if (len == 1 && (buf[0] == '+' || buf[0] == '-')) {
@@ -278,12 +261,12 @@ namespace glaze {
 //
 // string
 //
-    obj_t* reader_t::make_string(const char* buf, size_t len)
+    Object* Reader::make_string(const char* buf, size_t len)
     {
-        return new string_t(buf, len);
+        return new Str(buf, len);
     }
 
-    obj_t* reader_t::read_string()
+    Object* Reader::read_string()
     {
         char small_buf[READ_STRING_SMALL_BUFFER_SIZE];
         char* buf = small_buf;
@@ -311,7 +294,7 @@ namespace glaze {
 
                 if (c == '"') {
                     buf[i] = 0;
-                    obj_t* result = make_string(buf, i);
+                    Object* result = make_string(buf, i);
                     if (buf != small_buf) free(buf);
                     return result;
                 }
@@ -330,56 +313,60 @@ namespace glaze {
 //
 // list
 //
-    inline obj_t* reader_t::make_list_2items(obj_t* first, obj_t* second) {
-        return new cons_t(first, (new cons_t(second, shared->_nil)));
+    inline Object* Reader::make_list_2items(Object* first, Object* second) {
+        return new Cons(first, (new Cons(second, const_cast<Object*>(&Object::nil))));
     }
 
-    obj_t* reader_t::reverse_list(obj_t* lst, obj_t* tail)
+    Object* Reader::reverse_list(Object* lst, Object* tail)
     {
-        obj_t* r = tail;
-        obj_t* temp;
-        while (CONSP(lst)) {
+        Object* r = tail;
+        Object* temp;
+        while (lst->isCons()) {
             temp = CDR(lst);
-            ((cons_t*)lst)->set_cdr(r);
+            ((Cons*)lst)->setCdr(r);
             r = lst;
             lst = temp;
         }
         return r;
     }
 
-    obj_t* reader_t::read_list(bool bracketed)
+    Object* Reader::read_list(bool bracketed)
     {
-        obj_t* lst = shared->_nil;
-        obj_t* token;
+        Object* _nil = const_cast<Object*>(&Object::nil);
+        Object* lst = _nil;
+        Object* token;
+
+        // TODO: up efficiency.
+        // save first-ptr and last-ptr of list.
 
         while ((token = read_token()) != S_EOF) {
             if (token == S_RPAREN) {
                 if (bracketed) {
                     CALLERROR("bracketed list terminated by parenthesis");
                 }
-                lst = reverse_list(lst, shared->_nil);
+                lst = reverse_list(lst, _nil);
                 return lst;
             }
             if (token == S_RBRACK) {
                 if (!bracketed) {
                     CALLERROR("parenthesized list terminated by bracket");
                 }
-                lst = reverse_list(lst, shared->_nil);
+                lst = reverse_list(lst, _nil);
                 return lst;
             }
             if (token == S_LPAREN) {
-                lst = new cons_t(read_list(false), lst);
+                lst = new Cons(read_list(false), lst);
                 continue;
             }
             if (token == S_LBRACK) {
-                lst = new cons_t(read_list(true), lst);
+                lst = new Cons(read_list(true), lst);
                 continue;
             }
             if (token == S_DOT) {
-                if (lst == shared->_nil) {
+                if (lst == _nil) {
                     CALLERROR("misplaced dot('.') while reading list");
                 }
-                obj_t* rest = read_expr();
+                Object* rest = read_expr();
                 if (rest == S_DOT) CALLERROR("misplaced dot('.') while reading list");
 
                 token = read_token();
@@ -400,39 +387,38 @@ namespace glaze {
                 if (token == S_EOF) CALLERROR("unexpected end-of-file while reading list");
                 CALLERROR("more than one item following dot('.') while reading list");
             }
-            if (CONSP(token)) { }
-            lst = new cons_t(token, lst);
+            if (token->isCons()) { }
+            lst = new Cons(token, lst);
         }
 
         CALLERROR("unexpected end-of-file while reading list");
 
-        return shared->undef;
+        return const_cast<Object*>(&Object::undef);
     }
 
 /*
 ** symbol
 */
-    obj_t* reader_t::make_symbol(const char* buf)
+    Object* Reader::make_symbol(const char* buf)
     {
-        if (strcmp(buf, "nil") == 0) return shared->_nil;
-        if (strcmp(buf, "t") == 0) return shared->t;
+        if (strcmp(buf, "nil") == 0) return const_cast<Object*>(&Object::nil);
+        if (strcmp(buf, "t") == 0) return const_cast<Object*>(&Object::t);
 
-        return const_cast<symbol_t*>(shared->symbols->get(buf));
+        return const_cast<Symbol*>(symbol_table.get(buf));
     }
 
-    obj_t* reader_t::read_symbol()
+    Object* Reader::read_symbol()
     {
         char buf[MAX_READ_SYMBOL_LENGTH];
         size_t len = read_thing(buf, array_sizeof(buf));
-        if (len == 0)
-            return S_EOF;
+        if (len == 0) return S_EOF;
         return make_symbol(buf);
     }
 
 //
 // root
 //
-    obj_t* reader_t::read_token()
+    Object* Reader::read_token()
     {
         int c;
 
@@ -464,12 +450,12 @@ namespace glaze {
 
             // reader macros
         case '\'': {
-            obj_t* obj = read_expr();
+            Object* obj = read_expr();
             if (obj == S_EOF) CALLERROR("unexpected end-of-file following quotation-mark(')");
             return make_list_2items(S_QUOTE, obj);
         }
         case '`' : {
-            obj_t* obj = read_expr();
+            Object* obj = read_expr();
             if (obj == S_EOF) CALLERROR("unexpected end-of-file following grave-accent(`)");
             return make_list_2items(S_QUASIQUOTE, obj);
         }
@@ -497,9 +483,9 @@ namespace glaze {
         }
     }
 
-    obj_t* reader_t::read_expr()
+    Object* Reader::read_expr()
     {
-        obj_t* token = read_token();
+        Object* token = read_token();
 
         if (token == S_RPAREN) CALLERROR("unexpected closing parenthesis");
         if (token == S_RBRACK) CALLERROR("unexpected closing bracket");
@@ -508,7 +494,7 @@ namespace glaze {
         return token;
     }
 
-    void reader_t::error(const char* fname, unsigned int line, const char* fmt, ...)
+    void Reader::error(const char* fname, unsigned int line, const char* fmt, ...)
     {
         char fname_buf[32];
         remove_dir(fname, fname_buf, 32);
@@ -526,5 +512,4 @@ namespace glaze {
 
         throw "READER_ERROR";
     }
-
 }

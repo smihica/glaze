@@ -1,14 +1,39 @@
 #include <stdio.h>
-#include "glaze.h"
+#include "version.h"
+#include "reader.h"
 
-int main(int argc, char* argv[]) {
+using namespace glaze;
 
-    printf( "Glaze-Arc version 0.0.0 compiled at %s %s\n", __DATE__, __TIME__ );
+int main(int argc, char* argv[])
+{
 
-    glaze::Config conf;
+    #ifdef REQUIRE_GC_
 
-    glaze::Interpreter impl = glaze::Interpreter(&conf);
+    GC_INIT();
 
-    return impl.repl();
+    #endif
+
+    _program_id_stamp(stdout);
+
+    Reader* reader = new Reader();
+    FILE* fp_out = stdout;
+    Object* read_result;
+
+retry:
+    try {
+        while (1) {
+            fprintf(fp_out, "> ");
+            read_result = reader->read(stdin);
+            if (read_result == Reader::S_EOF) break;
+            // eval_result = shared.evaluator->eval(read_result, shared.global_env);
+            read_result->print(fp_out);
+            fprintf(fp_out, "\n");
+        }
+    } catch (const char* msg) {
+        fprintf(stderr, "    -- %s\n", msg);
+        goto retry;
+    }
+
+    return 0;
 
 }

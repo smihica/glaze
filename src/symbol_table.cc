@@ -4,37 +4,32 @@
 
 namespace glaze {
 
-    symbol_table::~symbol_table()
+    void SymbolTable::clear()
     {
-        clear();
-    }
-
-    void symbol_table::clear()
-    {
-        std::map<std::string, const symbol_t*>::iterator it;
 /*
+        std::map<std::string, const symbol_t*>::iterator it;
         for(it=m_table.begin(); it!=m_table.end(); it++)
         {
             delete (it->second); // gc delete
         }
 */
-
         m_table.clear();
     }
 
-    const symbol_t*
-    symbol_table::get(const char* name)
+    const Symbol*
+    SymbolTable::get(const char* name)
     {
-        const symbol_t* sym;
+        const Symbol* sym;
         std::string buf = std::string(name);
 
-        std::pair<std::map<std::string, const symbol_t*>::iterator, bool> pib = m_table.insert(std::pair<std::string, const symbol_t*>(buf, NULL));
+        std::pair<std::map<std::string, const Symbol*>::iterator, bool> pib =
+            m_table.insert(std::pair<std::string, const Symbol*>(buf, NULL));
 
         if (!pib.second) {
             sym = pib.first->second;
 
         } else {
-            sym = new symbol_t(name, strlen(name));
+            sym = new Symbol(name, strlen(name));
             pib.first->second = sym;
         }
 
@@ -42,9 +37,9 @@ namespace glaze {
     }
 
     void
-    symbol_table::print()
+    SymbolTable::print()
     {
-        std::map<std::string, const symbol_t*>::iterator it;
+        std::map<std::string, const Symbol*>::iterator it;
         printf("print symbol-table start...\n");
 
         for(it=m_table.begin(); it!=m_table.end(); it++)
@@ -57,5 +52,4 @@ namespace glaze {
 
         printf("end...\n");
     }
-
 }

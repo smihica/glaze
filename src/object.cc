@@ -1,54 +1,88 @@
 #include "core.h"
 #include "object.h"
-#include "env.h"
+//#include "env.h"
 
 namespace glaze {
 
+    const Object Object::undef;
+    const Object Object::nil;
+    const Object Object::t;
+
     /*
-    **  obj_t
+    **  Object
     */
-    obj_t::obj_t() {
-        m_type = OBJECT;
+
+    ssize_t Object::print(FILE* fp) const
+    {
+        return fprintf(fp, "%s", getObjectString());
     }
 
-    obj_t::~obj_t() {}
-
-    ssize_t obj_t::print() const { return print_proc(stdout); }
-    ssize_t obj_t::print(FILE* fp) const { return print_proc(fp); }
-    ssize_t obj_t::print(int fd) const { return print_proc(fd); }
-    ssize_t obj_t::print(char* target, size_t size) const { return print_proc(target, size); }
-
-    ssize_t
-    obj_t::print_proc(FILE* fp) const
+    ssize_t Object::print(int fd) const
     {
-        const char* str = "#<standard object>";
-        return fprintf(fp, "%s", str);
+        return fdprintf(fd, "%s", getObjectString());
     }
 
     ssize_t
-    obj_t::print_proc(int fd) const
+    Object::print(char* target, size_t size) const
     {
-        const char* str = "#<standard object>";
-        return fdprintf(fd, "%s", str);
-    }
-
-    ssize_t
-    obj_t::print_proc(char* target, size_t size) const
-    {
-        int res = snprintf(target, size, "#<standard object>");
+        int res = snprintf(target, size, "%s", getObjectString());
         if (res < 0) CALLERROR("snprintf() failed.");
         if (size <= res) return size - 1;
-
         return res;
     }
 
-    int
-    obj_t::type() const
+    const char*
+    Object::getObjectString() const
     {
-        return (int)m_type;
+        return isNil() ? "nil" : isT() ? "t" : isUndef() ? "#<undef>" : "#<object>";
     }
 
-    void obj_t::error(const char* fname, unsigned int line, const char* fmt, ...) const
+    bool
+    Object::isObject() const
+    {
+        return typeid(*this) == typeid(Object);
+    }
+
+    bool
+    Object::isSymbol() const
+    {
+        return typeid(*this) == typeid(Symbol);
+    }
+
+    bool
+    Object::isCons() const
+    {
+        return typeid(*this) == typeid(Cons);
+    }
+
+    bool
+    Object::isFunction() const
+    {
+        return (typeid(*this) == typeid(Function) ||
+                typeid(*this) == typeid(Subr) ||
+                typeid(*this) == typeid(Closure));
+    }
+
+    bool
+    Object::isSubr() const
+    {
+        return typeid(*this) == typeid(Subr);
+    }
+
+    bool
+    Object::isClosure() const
+    {
+        return typeid(*this) == typeid(Closure);
+    }
+
+    bool
+    Object::isNumber() const
+    {
+        return typeid(*this) == typeid(Number);
+    }
+
+    void
+    Object::error(const char* fname, unsigned int line, const char* fmt, ...) const
     {
         char fname_buf[32];
         remove_dir(fname, fname_buf, 32);
@@ -67,582 +101,440 @@ namespace glaze {
         throw "OBJECT_ERROR";
     }
 
+    /*
+    ** Symbol
+    */
 
-/*
-**  undef_t
-*/
-    undef_t::undef_t() {
-        m_type = UNDEF;
+    Symbol::Symbol(const char* src, size_t len) : m_name_heap(NULL)
+    {
+        if (len < SYMBOL_STACK_NAME_LENGTH) {
+            memcpy(m_name, src, len);
+            m_name[len] = '\0';
+            m_name_ptr = m_name;
+
+        } else {
+            m_name_heap = (char*)malloc(len+1);
+            memcpy(m_name_heap, src, len);
+            *(m_name_heap+len) = '\0';
+            m_name_ptr = m_name_heap;
+
+        }
+
+        m_len = len;
     }
 
-
-    ssize_t
-    undef_t::print_proc(FILE* fp) const
+    Symbol::~Symbol()
     {
-        const char* str = "#<undef>";
-        return fprintf(fp, "%s", str);
+        free(m_name_heap);
+    }
+
+    const bool
+    Symbol::operator==(const Symbol& target) const
+    {
+        return (strncmp(m_name_ptr, target.name(), m_len+1) == 0);
     }
 
     ssize_t
-    undef_t::print_proc(int fd) const
+    Symbol::print(FILE* fp) const
     {
-        const char* str = "#<undef>";
-        return fdprintf(fd, "%s", str);
+        int r;
+        if(r = fprintf(fp, "%s", m_name_ptr) < 0)
+            CALLERROR("fprintf() failed.");
+
+        return r;
     }
 
     ssize_t
-    undef_t::print_proc(char* target, size_t size) const
+    Symbol::print(int fd) const
     {
-        int res = snprintf(target, size, "#<undef>");
+        int r;
+        if(r = fdprintf(fd, "%s", m_name_ptr) < 0)
+            CALLERROR("dprintf() failed.");
+
+        return r;
+    }
+
+    ssize_t
+    Symbol::print(char* target, size_t size) const
+    {
+        int res = snprintf(target, size, "%s", m_name_ptr);
         if (res < 0) CALLERROR("snprintf() failed.");
         if (size <= res) return size - 1;
 
         return res;
     }
 
+    /*
+    **  Cons
+    */
 
-/*
-**  nil_t
-*/
-    nil_t::nil_t() {
-        m_type = NIL;
-    }
-
-
-    ssize_t
-    nil_t::print_proc(FILE* fp) const
-    {
-        const char* str = "nil";
-        return fprintf(fp, "%s", str);
-    }
-
-    ssize_t
-    nil_t::print_proc(int fd) const
-    {
-        const char* str = "nil";
-        return fdprintf(fd, "%s", str);
-    }
-
-    ssize_t
-    nil_t::print_proc(char* target, size_t size) const
-    {
-        int res = snprintf(target, size, "nil");
-        if (res < 0) CALLERROR("snprintf() failed.");
-        if (size <= res) return size - 1;
-
-        return res;
-    }
-
-/*
-**  cons_t
-*/
-    cons_t::cons_t(obj_t* car_ptr, obj_t* cdr_ptr) {
+    Cons::Cons(Object* car_ptr, Object* cdr_ptr) {
         m_car_ptr = car_ptr;
         m_cdr_ptr = cdr_ptr;
-        m_type = CONS;
     }
 
-    void
-    cons_t::set_car(obj_t* car_ptr) {
-        m_car_ptr = car_ptr;
+#define PRINT_LIST_FP_FD(FN, FN_STR, FN_ARG)                    \
+    {                                                           \
+        ssize_t ret = 0;                                        \
+        Object* x    = m_car_ptr;                               \
+        Object* next = m_cdr_ptr;                               \
+                                                                \
+        if (FN(FN_ARG, "(") < 0) CALLERROR(FN_STR"() failed.");         \
+        ret++;                                                          \
+                                                                        \
+        while(1) {                                                      \
+                                                                        \
+            ret += x->print(FN_ARG);                                    \
+                                                                        \
+            if (!next->isCons()) {                                      \
+                if (!next->isNil()) {                                   \
+                    if (FN(FN_ARG, " . ") < 0)                          \
+                        CALLERROR(FN_STR"() failed.");                  \
+                    ret += (3 + next->print(FN_ARG));                   \
+                }                                                       \
+                break;                                                  \
+            }                                                           \
+                                                                        \
+            /* isCons */                                                \
+            if (FN(FN_ARG, " ") < 0) CALLERROR(FN_STR"() failed.");     \
+            ret++;                                                      \
+            x = static_cast<Cons*>(next)->car();                        \
+            next = static_cast<Cons*>(next)->cdr();                     \
+                                                                        \
+        }                                                               \
+                                                                        \
+        if (FN(FN_ARG, ")") < 0) CALLERROR(FN_STR"() failed.");         \
+        ret++;                                                          \
+                                                                        \
+        return ret;                                                     \
     }
 
-    void
-    cons_t::set_cdr(obj_t* cdr_ptr) {
-        m_cdr_ptr = cdr_ptr;
-    }
+    ssize_t Cons::print(FILE* fp) const
+        PRINT_LIST_FP_FD(fprintf, "fprintf", fp);
 
-    obj_t*
-    cons_t::car() const
-    {
-        return m_car_ptr;
-    }
-
-    obj_t*
-    cons_t::cdr() const
-    {
-        return m_cdr_ptr;
-    }
+    ssize_t Cons::print(int fd) const
+        PRINT_LIST_FP_FD(fdprintf, "fdprintf", fd);
 
     ssize_t
-    cons_t::print_list(FILE* fp, bool top) const
+    Cons::print(char* target, size_t size) const
     {
-        ssize_t ret = 0;
+        ssize_t ret  = 0;
+        int     res  = 0;
+        Object* x    = m_car_ptr;
+        Object* next = m_cdr_ptr;
 
-        if (top) {
-            if (fprintf(fp, "(") < 0) CALLERROR("fprintf() failed.");
-            ret++;
+#define STRING_PRINT_LIST_CHECK()                           \
+        {                                                   \
+            if (res < 0) CALLERROR("snprintf() failed.");   \
+            if (size <= res) return ret + (size - 1);       \
+            ret  += res;                                    \
+            size -= res;                                    \
         }
 
-        ret += m_car_ptr->print(fp);
+        res = snprintf(target+ret, size, "(");
+        STRING_PRINT_LIST_CHECK();
 
-        int next_type = m_cdr_ptr->type();
+        while(1) {
 
-        if (next_type == (int)CONS)
-        {
-            if (fprintf(fp, " ") < 0) CALLERROR("fprintf() failed.");
-            ret++;
-            ret += ((cons_t*)m_cdr_ptr)->print_list(fp, false);
-        }
-        else if (next_type == (int)NIL)
-        {
-            // nothing to do.
-        }
-        else
-        {
-            if (fprintf(fp, " . ") < 0) CALLERROR("fprintf() failed.");
-            ret += 3;
+            res = x->print(target+ret, size);
+            STRING_PRINT_LIST_CHECK();
 
-            ret += m_cdr_ptr->print(fp);
-        }
+            if (!next->isCons()) {
+                if (!next->isNil()) {
 
-        if (top)
-        {
-            if (fprintf(fp, ")") < 0) CALLERROR("fprintf() failed.");
-            ret++;
-        }
+                    res = snprintf(target+ret, size, " . ");
+                    STRING_PRINT_LIST_CHECK();
 
-        return ret;
-    }
+                    ret = next->print(target+ret, size);
+                    STRING_PRINT_LIST_CHECK();
 
-    ssize_t
-    cons_t::print_list(int fd, bool top) const
-    {
-        ssize_t ret = 0;
+                }
+                break;
+            }
 
-        if (top) {
-            if (fdprintf(fd, "(") < 0) CALLERROR("fdprintf() failed.");
-            ret++;
-        }
-
-        ret += m_car_ptr->print(fd);
-
-        int next_type = m_cdr_ptr->type();
-
-        if (next_type == (int)CONS)
-        {
-            if (fdprintf(fd, " ") < 0) CALLERROR("fdprintf() failed.");
-            ret++;
-            ret += ((cons_t*)m_cdr_ptr)->print_list(fd, false);
-        }
-        else if (next_type == (int)NIL)
-        {
-            // nothing to do.
-        }
-        else
-        {
-            if (fdprintf(fd, " . ") < 0) CALLERROR("fdprintf() failed.");
-            ret += 3;
-
-            ret += m_cdr_ptr->print(fd);
-        }
-
-        if (top)
-        {
-            if (fdprintf(fd, ")") < 0) CALLERROR("fdprintf() failed.");
-            ret++;
-        }
-
-        return ret;
-    }
-
-    ssize_t
-    cons_t::print_list(char* target, size_t size, bool top) const
-    {
-        ssize_t ret = 0;
-        int res = 0;
-
-        if (top) {
-            res = snprintf(target+ret, size, "(");
-            if (res < 0) CALLERROR("snprintf() failed.");
-            if (size <= res) return ret + (size - 1);
-            ret  += res;
-            size -= res;
-        }
-
-        res = m_car_ptr->print(target+ret, size);
-        ret += res;
-        size -= res;
-
-        int next_type = m_cdr_ptr->type();
-
-        if (next_type == (int)CONS)
-        {
+            /* isCons */
             res = snprintf(target+ret, size, " ");
-            if (res < 0) CALLERROR("snrintf() failed.");
-            if (size <= res) return ret + (size - 1);
-            ret  += res;
-            size -= res;
+            STRING_PRINT_LIST_CHECK();
 
-            res = ((cons_t*)m_cdr_ptr)->print_list(target+ret, size, false);
-            ret  += res;
-            size -= res;
-        }
-        else if (next_type == (int)NIL)
-        {
-            // nothing to do.
-        }
-        else
-        {
-            res = snprintf(target+ret, size, " . ");
-            if (res < 0) CALLERROR("snrintf() failed.");
-            if (size <= res) return ret + (size - 1);
-            ret  += res;
-            size -= res;
+            x = static_cast<Cons*>(next)->car();
+            next = static_cast<Cons*>(next)->cdr();
 
-            res = m_cdr_ptr->print(target+ret, size);
-            ret  += res;
-            size -= res;
         }
 
-        if (top)
-        {
-            res = snprintf(target+ret, size, ")");
-            if (res < 0) CALLERROR("snrintf() failed.");
-            if (size <= res) return ret + (size - 1);
-            ret  += res;
-            size -= res;
-        }
+        res = snprintf(target+ret, size, ")");
+        STRING_PRINT_LIST_CHECK();
 
         return ret;
     }
 
-    ssize_t
-    cons_t::print_proc(FILE* fp) const
+    /*
+    ** Subr
+    */
+
+    Subr::Subr(const char* name, void* proc) : m_name_heap(NULL)
     {
-        return print_list(fp, true);
+        unsigned int len = strlen(name);
+        if (len < FUNCTION_STACK_NAME_LENGTH) {
+            memcpy(m_name, name, len);
+            m_name[len] = '\0';
+            m_name_ptr = m_name;
+
+        } else {
+            m_name_heap = (char*)malloc(len+1);
+            memcpy(m_name_heap, name, len);
+            *(m_name_heap+len) = '\0';
+            m_name_ptr = m_name_heap;
+
+        }
+
+        m_proc = proc;
+    }
+
+    Subr::~Subr()
+    {
+        free(m_name_heap);
     }
 
     ssize_t
-    cons_t::print_proc(int fd) const
+    Subr::print(FILE* fp) const
     {
-        return print_list(fd, true);
+        return fprintf(fp, "#<subr %s>", m_name);
     }
 
     ssize_t
-    cons_t::print_proc(char* target, size_t size) const
+    Subr::print(int fd) const
     {
-        return print_list(target, size, true);
+        return fdprintf(fd, "#<subr %s>", m_name);
     }
 
+    ssize_t
+    Subr::print(char* target, size_t size) const
+    {
+        int res = snprintf(target, size, "#<subr %s>", m_name);
+        if (res < 0) CALLERROR("snprintf() failed.");
+        if (size <= res) return size - 1;
 
-/*
-**  number_t
-*/
+        return res;
+    }
 
-    number_t::number_t(const number_t* n)   { operator=(n); m_type = NUMBER; }
-    number_t::number_t(const int64_t n)     { operator=(n); m_type = NUMBER; }
-    number_t::number_t(const double n)      { operator=(n); m_type = NUMBER; }
+    /*
+    ** Closure
+    */
 
-    number_t&
-    number_t::operator=(const number_t& n) {
-        switch ((int)(n.get_number_type())) {
+    Closure::Closure(Cons* compiled_body) : m_name_heap(NULL), m_name_ptr("#f")
+    {
+        // m_code = new VMCode(compiled_body);
+        m_code = NULL;
+    }
+
+    Closure::~Closure()
+    {
+        free(m_name_heap);
+    }
+
+    void
+    Closure::setName(const char* name)
+    {
+        unsigned int len = strlen(name);
+        if (len < FUNCTION_STACK_NAME_LENGTH) {
+            memcpy(m_name, name, len);
+            m_name[len] = '\0';
+            m_name_ptr = m_name;
+
+        } else {
+            m_name_heap = (char*)realloc(m_name_heap, len+1);
+            *(m_name_heap+len) = '\0';
+            m_name_ptr = m_name_heap;
+
+        }
+    }
+
+    ssize_t
+    Closure::print(FILE* fp) const
+    {
+        return fprintf(fp, "#<closure %s>", m_name_ptr);
+    }
+
+    ssize_t
+    Closure::print(int fd) const
+    {
+        return fdprintf(fd, "#<closure %s>", m_name_ptr);
+    }
+
+    ssize_t
+    Closure::print(char* target, size_t size) const
+    {
+        int res = snprintf(target, size, "#<closure %s>", m_name_ptr);
+        if (res < 0) CALLERROR("snprintf() failed.");
+        if (size <= res) return size - 1;
+
+        return res;
+    }
+
+    /*
+    **  Number
+    */
+
+    Number&
+    Number::operator=(const Number& n) {
+        switch (n.getNumberType()) {
         case FIXNUM:
-            operator=(n.get_fixnum());
-            break;
+            return operator=(n.getFixnum());
         case FLOAT:
-            operator=(n.get_floatnum());
-            break;
+            return operator=(n.getFloatnum());
         default:
             CALLERROR("unknown number type.");
         }
-
         return *this;
     }
 
-    number_t&
-    number_t::operator=(const int64_t n) {
+    Number&
+    Number::operator=(const int64_t n) {
         m_number_type  = FIXNUM;
         m_value.fixnum = n;
 
         return *this;
     }
 
-    number_t&
-    number_t::operator=(const double n) {
+    Number&
+    Number::operator=(const double n) {
         m_number_type    = FLOAT;
         m_value.floatnum = n;
 
         return *this;
     }
 
-    const number_t
-    number_t::operator+(const number_t& n) const
-    {
-        int type_set = ((int)m_number_type << 1) | n.get_number_type();
-
-        switch (type_set) {
-        case 0: // 00 int int
-            return number_t(m_value.fixnum + n.get_fixnum());
-        case 1: // 01 int float
-            return number_t(static_cast<double>(m_value.fixnum) + n.get_floatnum());
-        case 2: // 10 float int
-            return number_t(m_value.floatnum + static_cast<double>(n.get_fixnum()));
-        case 3: // 11 float float
-            return number_t(m_value.floatnum + n.get_floatnum());
-        default:
-            CALLERROR("number + is filed.");
-        }
-
-        return *this;
+#define NUMBER_CONST_OPERATOR(RETURN_TYPE, RETURN_FN, OP, OPSTR, ERROR_RETURN)  \
+    const RETURN_TYPE                                                   \
+    Number::operator OP (const Number& n) const                         \
+    {                                                                   \
+        register char type_set = ((int)m_number_type << 1) | n.getNumberType(); \
+                                                                        \
+        switch (type_set) {                                             \
+        case 0: /* 00 int int */                                        \
+            return RETURN_FN (m_value.fixnum OP n.getFixnum());             \
+        case 1: /* 01 int float */                                      \
+            return RETURN_FN (static_cast<double>(m_value.fixnum) OP n.getFloatnum()); \
+        case 2: /* 10 float int */                                      \
+            return RETURN_FN (m_value.floatnum OP static_cast<double>(n.getFixnum())); \
+        case 3: /* 11 float float */                                    \
+            return RETURN_FN (m_value.floatnum OP n.getFloatnum());         \
+        default:                                                        \
+            CALLERROR("number " OPSTR " is failed.");                   \
+        }                                                               \
+        return ERROR_RETURN;                                            \
     }
 
-    const number_t
-    number_t::operator-(const number_t& n) const
-    {
-        int type_set = ((int)m_number_type << 1) | n.get_number_type();
+    NUMBER_CONST_OPERATOR(Number, Number, +,  "+",  *this)
+    NUMBER_CONST_OPERATOR(Number, Number, -,  "-",  *this)
+    NUMBER_CONST_OPERATOR(Number, Number, *,  "*",  *this)
+    NUMBER_CONST_OPERATOR(Number, Number, /,  "/",  *this)
 
-        switch (type_set) {
-        case 0:
-            return number_t(m_value.fixnum - n.get_fixnum());
-        case 1:
-            return number_t(static_cast<double>(m_value.fixnum) - n.get_floatnum());
-        case 2:
-            return number_t(m_value.floatnum - static_cast<double>(n.get_fixnum()));
-        case 3:
-            return number_t(m_value.floatnum - n.get_floatnum());
-        default:
-            CALLERROR("number - is filed.");
-        }
+    NUMBER_CONST_OPERATOR(bool, , ==, "==", false)
+    NUMBER_CONST_OPERATOR(bool, , !=, "!=", true)
+    NUMBER_CONST_OPERATOR(bool, , <=, "<=", false)
+    NUMBER_CONST_OPERATOR(bool, , >=, ">=", false)
+    NUMBER_CONST_OPERATOR(bool, , <,  "<",  false)
+    NUMBER_CONST_OPERATOR(bool, , >,  ">",  false)
 
-        return *this;
+
+#define NUMBER_X_EQL_OPERATOR(OP, X)            \
+    Number&                                     \
+    Number::operator OP (const Number& n)       \
+    {                                           \
+        operator = ( operator X (n));           \
+        return *this;                           \
     }
 
-    const number_t
-    number_t::operator*(const number_t& n) const
-    {
-        int type_set = ((int)m_number_type << 1) | n.get_number_type();
-
-        switch (type_set) {
-        case 0:
-            return number_t(m_value.fixnum * n.get_fixnum());
-        case 1:
-            return number_t(static_cast<double>(m_value.fixnum) * n.get_floatnum());
-        case 2:
-            return number_t(m_value.floatnum * static_cast<double>(n.get_fixnum()));
-        case 3:
-            return number_t(m_value.floatnum * n.get_floatnum());
-        default:
-            CALLERROR("number * is filed.");
-        }
-
-        return *this;
-    }
-
-    const number_t
-    number_t::operator/(const number_t& n) const
-    {
-        int type_set = ((int)m_number_type << 1) | n.get_number_type();
-
-        switch (type_set) {
-        case 0:
-            return number_t(m_value.fixnum / n.get_fixnum());
-        case 1:
-           return number_t(static_cast<double>(m_value.fixnum) / n.get_floatnum());
-        case 2:
-            return number_t(m_value.floatnum / static_cast<double>(n.get_fixnum()));
-        case 3:
-            return number_t(m_value.floatnum / n.get_floatnum());
-        default:
-            CALLERROR("number / is filed.");
-        }
-
-        return *this;
-    }
-
-    const bool
-    number_t::operator==(const number_t& n) const
-    {
-        return ((m_number_type == n.get_number_type()) &&
-                ((m_number_type == FIXNUM) ? (m_value.fixnum == n.get_fixnum()) : (m_value.floatnum == n.get_floatnum())));
-    }
-
-    const bool
-    number_t::operator!=(const number_t& n) const
-    {
-        return !operator==(n);
-    }
-
-    const bool
-    number_t::operator<=(const number_t& n) const
-    {
-        int type_set = ((int)m_number_type << 1) | n.get_number_type();
-
-        switch (type_set) {
-        case 0:
-            return (m_value.fixnum <= n.get_fixnum());
-        case 1:
-            return (static_cast<double>(m_value.fixnum) <= n.get_floatnum());
-        case 2:
-            return (m_value.floatnum <= static_cast<double>(n.get_fixnum()));
-        case 3:
-            return (m_value.floatnum <= n.get_floatnum());
-        default:
-            CALLERROR("number <= is filed.");
-        }
-
-        return false;
-    }
-
-    const bool
-    number_t::operator>=(const number_t& n) const
-    {
-        int type_set = ((int)m_number_type << 1) | n.get_number_type();
-
-        switch (type_set) {
-        case 0:
-            return (m_value.fixnum >= n.get_fixnum());
-        case 1:
-            return (static_cast<double>(m_value.fixnum) >= n.get_floatnum());
-        case 2:
-            return (m_value.floatnum >= static_cast<double>(n.get_fixnum()));
-        case 3:
-            return (m_value.floatnum >= n.get_floatnum());
-        default:
-            CALLERROR("number >= is filed.");
-        }
-
-        return false;
-    }
-
-    const bool
-    number_t::operator<(const number_t& n) const
-    {
-        int type_set = ((int)m_number_type << 1) | n.get_number_type();
-
-        switch (type_set) {
-        case 0:
-            return (m_value.fixnum < n.get_fixnum());
-        case 1:
-            return (static_cast<double>(m_value.fixnum) < n.get_floatnum());
-        case 2:
-            return (m_value.floatnum < static_cast<double>(n.get_fixnum()));
-        case 3:
-            return (m_value.floatnum < n.get_floatnum());
-        default:
-            CALLERROR("number < is filed.");
-        }
-
-        return false;
-    }
-
-    const bool
-    number_t::operator>(const number_t& n) const
-    {
-        int type_set = ((int)m_number_type << 1) | n.get_number_type();
-
-        switch (type_set) {
-        case 0:
-            return (m_value.fixnum > n.get_fixnum());
-        case 1:
-            return (static_cast<double>(m_value.fixnum) > n.get_floatnum());
-        case 2:
-            return (m_value.floatnum > static_cast<double>(n.get_fixnum()));
-        case 3:
-            return (m_value.floatnum > n.get_floatnum());
-        default:
-            CALLERROR("number > is filed.");
-        }
-
-        return false;
-    }
-
-    number_t&
-    number_t::operator+=(const number_t& n)
-    {
-        *this = operator+(n);
-        return *this;
-    }
-
-    number_t&
-    number_t::operator-=(const number_t& n)
-    {
-        *this = operator-(n);
-        return *this;
-    }
-
-    number_t&
-    number_t::operator*=(const number_t& n)
-    {
-        *this = operator*(n);
-        return *this;
-    }
-
-    number_t&
-    number_t::operator/=(const number_t& n)
-    {
-        *this = operator/(n);
-        return *this;
-    }
+    NUMBER_X_EQL_OPERATOR(+=, +)
+    NUMBER_X_EQL_OPERATOR(-=, -)
+    NUMBER_X_EQL_OPERATOR(*=, *)
+    NUMBER_X_EQL_OPERATOR(/=, /)
 
     void
-    number_t::to_str(char* buf, size_t size) const
+    Number::tostr(char* buf, size_t size) const
     {
-        switch (m_number_type) 
+        print(buf, size);
+    }
+
+    ssize_t
+    Number::print(FILE* fp) const
+    {
+        register int ret;
+        switch (m_number_type)
         {
         case FIXNUM:
-            if (snprintf(buf, size, "%lld", m_value.fixnum) < 0)
+            if (ret = fprintf(fp, "%lld", m_value.fixnum) < 0)
                 CALLERROR("snprintf() failed.");
-            break;
+            return ret;
         case FLOAT:
-            if (snprintf(buf, size, "%g", m_value.floatnum) < 0)
+            if (ret = fprintf(fp, "%g", m_value.floatnum) < 0)
                 CALLERROR("snprintf() failed.");
-            break;
+            return ret;
         default:
             CALLERROR("unknown number type.");
         }
+        return ret;
     }
 
     ssize_t
-    number_t::print_proc(FILE* fp) const
+    Number::print(int fd) const
     {
-        char buf[PRINT_NUMBER_BUFFER_SIZE];
-        to_str(buf, PRINT_NUMBER_BUFFER_SIZE);
-
-        if(fprintf(fp, "%s", buf) < 0)
-            CALLERROR("fprintf() failed.");
-
-        return strlen(buf);
+        register int ret;
+        switch (m_number_type)
+        {
+        case FIXNUM:
+            if (ret = fdprintf(fd, "%lld", m_value.fixnum) < 0)
+                CALLERROR("snprintf() failed.");
+            return ret;
+        case FLOAT:
+            if (ret = fdprintf(fd, "%g", m_value.floatnum) < 0)
+                CALLERROR("snprintf() failed.");
+            return ret;
+        default:
+            CALLERROR("unknown number type.");
+        }
+        return ret;
     }
 
     ssize_t
-    number_t::print_proc(int fd) const
+    Number::print(char* target, size_t size) const
     {
-        char buf[PRINT_NUMBER_BUFFER_SIZE];
-        to_str(buf, PRINT_NUMBER_BUFFER_SIZE);
-
-        if (fdprintf(fd, buf) < 0)
-            CALLERROR("dprintf() failed.");
-
-        return strlen(buf);
+        register int ret;
+        switch (m_number_type)
+        {
+        case FIXNUM:
+            if (ret = snprintf(target, size, "%lld", m_value.fixnum) < 0)
+                CALLERROR("snprintf() failed.");
+            return ret;
+        case FLOAT:
+            if (ret = snprintf(target, size, "%g", m_value.floatnum) < 0)
+                CALLERROR("snprintf() failed.");
+            return ret;
+        default:
+            CALLERROR("unknown number type.");
+        }
+        return ret;
     }
 
-    ssize_t
-    number_t::print_proc(char* target, size_t size) const
-    {
-        to_str(target, size);
 
-        return strlen(target);
-    }
+    /*
+    ** String
+    */
 
-
-/*
-**  string_t
-*/
-    string_t::string_t(const char* src, size_t len){
+    Str::Str(const char* src, size_t len){
         m_ptr = (char*)malloc(len+1);
         memcpy(m_ptr, src, len);
         *(m_ptr+len) = '\0';
 
         m_len = strlen(m_ptr);
-        m_type = STRING;
     }
 
-    string_t::~string_t() {
+    Str::~Str() {
         free(m_ptr);
     }
 
-    const string_t string_t::operator+(const string_t& str) const
+    const Str Str::operator+(const Str& str) const
     {
         // todo ::
         // up efficiency.
@@ -656,28 +548,28 @@ namespace glaze {
 
         *(buf+len) = '\0';
 
-        return string_t(buf, len);
+        return Str(buf, len);
     }
 
-    string_t& string_t::operator+=(const string_t& str)
+    Str& Str::operator+=(const Str& str)
     {
         *this = operator+(str);
         return *this;
     }
 
     const bool
-    string_t::operator==(const string_t& str) const
+    Str::operator==(const Str& str) const
     {
         return (m_len != str.len()) ? false : (strncmp(m_ptr, str.c_str(), m_len+1) == 0);
     }
 
     const bool
-    string_t::operator!=(const string_t& str) const
+    Str::operator!=(const Str& str) const
     {
         return !operator==(str);
     }
 
-    void string_t::update(const char* src, size_t len) {
+    void Str::update(const char* src, size_t len) {
         // todo ::
         // up efficiency.
         // full memory copy occur every time.
@@ -689,7 +581,7 @@ namespace glaze {
         m_len = strlen(m_ptr);
     }
 
-    ssize_t string_t::display(FILE* fp) const
+    ssize_t Str::display(FILE* fp) const
     {
         ssize_t i;
         size_t len = strlen(m_ptr);
@@ -712,8 +604,7 @@ namespace glaze {
                     break;
                 case 't':
                     fprintf(fp, "%c", '\t');
-                case 's':
-                    fprintf(fp, "%c", '\s');
+                    break;
                 }
             } else {
                 fprintf(fp, "%c", c);
@@ -724,8 +615,7 @@ namespace glaze {
         return i;
     }
 
-    ssize_t
-    string_t::print_proc(FILE* fp) const
+    ssize_t Str::print(FILE* fp) const
     {
         ssize_t s = 0;
         if(fprintf(fp, "\"") < 0)
@@ -743,8 +633,7 @@ namespace glaze {
         return s;
     }
 
-    ssize_t
-    string_t::print_proc(int fd) const
+    ssize_t Str::print(int fd) const
     {
         ssize_t s = 0;
         if(fdprintf(fd, "\"") < 0)
@@ -763,270 +652,10 @@ namespace glaze {
 
     }
 
-    ssize_t
-    string_t::print_proc(char* target, size_t size) const
+    ssize_t Str::print(char* target, size_t size) const
     {
 
         int res = snprintf(target, size, "\"%s\"", m_ptr);
-        if (res < 0) CALLERROR("snprintf() failed.");
-        if (size <= res) return size - 1;
-
-        return res;
-    }
-
-
-/*
-**  symbol_t
-*/
-    symbol_t::symbol_t(const char* src, size_t len){
-        m_name = (char*)malloc(len+1);
-        memcpy(m_name, src, len);
-        *(m_name+len) = '\0';
-
-        m_len = strlen(m_name);
-        m_type = SYMBOL;
-    }
-
-    symbol_t::~symbol_t() {
-        free(m_name);
-    }
-
-    const bool
-    symbol_t::operator==(const symbol_t& target) const
-    {
-        return (strncmp(m_name, target.name(), m_len+1) == 0);
-    }
-
-    ssize_t
-    symbol_t::print_proc(FILE* fp) const
-    {
-        if(fprintf(fp, "%s", m_name) < 0)
-            CALLERROR("fprintf() failed.");
-
-        return m_len;
-    }
-
-    ssize_t
-    symbol_t::print_proc(int fd) const
-    {
-        if(fdprintf(fd, "%s", m_name) < 0)
-            CALLERROR("dprintf() failed.");
-
-        return m_len;
-    }
-
-    ssize_t
-    symbol_t::print_proc(char* target, size_t size) const
-    {
-        int res = snprintf(target, size, "%s", m_name);
-        if (res < 0) CALLERROR("snprintf() failed.");
-        if (size <= res) return size - 1;
-
-        return res;
-    }
-
-
-/*
-** t_t
-*/
-    t_t::t_t() {
-        m_type = T;
-    }
-
-    ssize_t
-    t_t::print_proc(FILE* fp) const
-    {
-        if(fprintf(fp, "t") < 0)
-            CALLERROR("fprintf() failed.");
-
-        return 1;
-    }
-
-    ssize_t
-    t_t::print_proc(int fd) const
-    {
-        if(fdprintf(fd, "t") < 0)
-            CALLERROR("dprintf() failed.");
-
-        return 1;
-    }
-
-    ssize_t
-    t_t::print_proc(char* target, size_t size) const
-    {
-        int res = snprintf(target, size, "t");
-        if (res < 0) CALLERROR("snprintf() failed.");
-        if (size <= res) return size - 1;
-
-        return res;
-    }
-
-/*
-** subr_t
-*/
-    subr_t::subr_t(const char* name, void* proc)
-    {
-        m_type = SUBR;
-        m_proc = proc;
-        m_name = (char*)malloc(strlen(name)+1);
-        memcpy(m_name, name, strlen(name)+1);
-    }
-
-    subr_t::~subr_t()
-    {
-        free(m_name);
-    }
-
-    ssize_t
-    subr_t::print_proc(FILE* fp) const
-    {
-        return fprintf(fp, "#<subr %s>", m_name);
-    }
-
-    ssize_t
-    subr_t::print_proc(int fd) const
-    {
-        return fdprintf(fd, "#<subr %s>", m_name);
-    }
-
-    ssize_t
-    subr_t::print_proc(char* target, size_t size) const
-    {
-        int res = snprintf(target, size, "#<subr %s>", m_name);
-        if (res < 0) CALLERROR("snprintf() failed.");
-        if (size <= res) return size - 1;
-
-        return res;
-    }
-
-/*
-** closure_t
-*/
-    closure_t::closure_t(obj_t* parameters, obj_t* body, env_t* env)
-    {
-        m_type = CLOSURE;
-        m_parameters = parameters;
-        m_body = body;
-        m_env = new env_t(*env);
-
-        m_name = NULL;
-    }
-
-    closure_t::~closure_t()
-    {
-        free(m_name);
-        delete m_env;
-    }
-
-    void
-    closure_t::set_name(const char* name)
-    {
-        m_name = (char*)realloc(m_name, strlen(name)+1);
-        memcpy(m_name, name, strlen(name)+1);
-    }
-
-    ssize_t
-    closure_t::print_proc(FILE* fp) const
-    {
-        return fprintf(fp, "#<closure %s>", m_name == NULL ? "#f" : m_name);
-    }
-
-    ssize_t
-    closure_t::print_proc(int fd) const
-    {
-        return fdprintf(fd, "#<closure %s>", m_name == NULL ? "#f" : m_name);
-    }
-
-    ssize_t
-    closure_t::print_proc(char* target, size_t size) const
-    {
-        int res = snprintf(target, size, "#<closure %s>", m_name == NULL ? "#f" : m_name);
-        if (res < 0) CALLERROR("snprintf() failed.");
-        if (size <= res) return size - 1;
-
-        return res;
-    }
-
-
-/*
-** macro_t
-*/
-    macro_t::macro_t(obj_t* parameters, obj_t* body, env_t* env)
-    {
-        m_type = MACRO;
-        m_parameters = parameters;
-        m_body = body;
-        m_env = new env_t(*env);
-
-        m_name = NULL;
-    }
-
-    macro_t::~macro_t()
-    {
-        free(m_name);
-        delete m_env;
-    }
-
-    void
-    macro_t::set_name(const char* name)
-    {
-        m_name = (char*)realloc(m_name, strlen(name)+1);
-        memcpy(m_name, name, strlen(name)+1);
-    }
-
-    ssize_t
-    macro_t::print_proc(FILE* fp) const
-    {
-        return fprintf(fp, "#<macro %s>", m_name == NULL ? "#f" : m_name);
-    }
-
-    ssize_t
-    macro_t::print_proc(int fd) const
-    {
-        return fdprintf(fd, "#<macro %s>", m_name == NULL ? "#f" : m_name);
-    }
-
-    ssize_t
-    macro_t::print_proc(char* target, size_t size) const
-    {
-        int res = snprintf(target, size, "#<macro %s>", m_name == NULL ? "#f" : m_name);
-        if (res < 0) CALLERROR("snprintf() failed.");
-        if (size <= res) return size - 1;
-
-        return res;
-    }
-
-/*
-** syntax_t
-*/
-    syntax_t::syntax_t(const char* name)
-    {
-        m_type = SYNTAX;
-        m_name = (char*)realloc(m_name, strlen(name)+1);
-        memcpy(m_name, name, strlen(name)+1);
-    }
-
-    syntax_t::~syntax_t()
-    {
-        free(m_name);
-    }
-
-    ssize_t
-    syntax_t::print_proc(FILE* fp) const
-    {
-        return fprintf(fp, "#<special-syntax %s>", m_name);
-    }
-
-    ssize_t
-    syntax_t::print_proc(int fd) const
-    {
-        return fdprintf(fd, "#<special-syntax %s>", m_name);
-    }
-
-    ssize_t
-    syntax_t::print_proc(char* target, size_t size) const
-    {
-        int res = snprintf(target, size, "#<special-syntax %s>", m_name);
         if (res < 0) CALLERROR("snprintf() failed.");
         if (size <= res) return size - 1;
 
