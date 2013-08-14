@@ -3,6 +3,8 @@ TODO
 \#*
 ~*
 tmp/
+src/tmp/
+src/tmp2/
 build/
 autom4te.cache/
 src/lib/*.core
