@@ -16,8 +16,9 @@ namespace glaze {
     Object* Reader::S_UNQUOTE;
     Object* Reader::S_UNQUOTE_SPLICING;
 
-    Reader::Reader() : symbol_table()
+    Reader::Reader(Context* cont)
     {
+        symbol_table = cont->symbolTable;
         init();
     }
 
@@ -93,7 +94,7 @@ namespace glaze {
 
     void Reader::resolv_state()
     {
-        if (m_save.empty()) CALLERROR("state is not saved.");
+        if (m_save.empty()) ERR("state is not saved.");
         Reader::state* last = &(m_save.back());
 
         m_fd = last->fd;
@@ -142,7 +143,7 @@ namespace glaze {
     bool Reader::delimited(int c)
     {
         if (whitespace_p(c)) return true;
-        if (c > 127) CALLERROR("invalid character %U while reading identifier", c);
+        if (c > 127) ERR("invalid character %U while reading identifier", c);
         return DELIMITER_CHARP(c);
     }
 
@@ -165,14 +166,14 @@ namespace glaze {
                 c = *(m_src + m_read);
                 res = (int)c;
             } else {
-                CALLERROR("unknown input type.");
+                ERR("unknown input type.");
             }
 
             if (res < 0) {
                 if (errno == EINTR) {
                     goto get_top;
                 } else {
-                    CALLERROR("some error occured in get(). (%s)", strerror(errno));
+                    ERR("some error occured in get(). (%s)", strerror(errno));
                 }
             } else if (res == 0) {
                 c = EOF;
@@ -215,9 +216,9 @@ namespace glaze {
             }
             get();
             if (c < 128) buf[i++] = c;
-            else CALLERROR("invalid character %U while reading identifier", c);
+            else ERR("invalid character %U while reading identifier", c);
         }
-        CALLERROR("token buffer overflow while reading identifier, %s ...", buf);
+        ERR("token buffer overflow while reading identifier, %s ...", buf);
     }
 
     // Object Readers
@@ -283,7 +284,7 @@ namespace glaze {
                         buf = (char*)realloc(buf, bufsize);
                     }
                     if (buf == NULL) {
-                        CALLERROR("memory exhausted while reading string.");
+                        ERR("memory exhausted while reading string.");
                         exit(1);
                     }
                 }
@@ -299,7 +300,7 @@ namespace glaze {
                     return result;
                 }
                 if(c == EOF) {
-                    CALLERROR("unexpected end-of-file while reading string");
+                    ERR("unexpected end-of-file while reading string");
                 }
                 i++;
             }
@@ -342,14 +343,14 @@ namespace glaze {
         while ((token = read_token()) != S_EOF) {
             if (token == S_RPAREN) {
                 if (bracketed) {
-                    CALLERROR("bracketed list terminated by parenthesis");
+                    ERR("bracketed list terminated by parenthesis");
                 }
                 lst = reverse_list(lst, _nil);
                 return lst;
             }
             if (token == S_RBRACK) {
                 if (!bracketed) {
-                    CALLERROR("parenthesized list terminated by bracket");
+                    ERR("parenthesized list terminated by bracket");
                 }
                 lst = reverse_list(lst, _nil);
                 return lst;
@@ -364,34 +365,34 @@ namespace glaze {
             }
             if (token == S_DOT) {
                 if (lst == _nil) {
-                    CALLERROR("misplaced dot('.') while reading list");
+                    ERR("misplaced dot('.') while reading list");
                 }
                 Object* rest = read_expr();
-                if (rest == S_DOT) CALLERROR("misplaced dot('.') while reading list");
+                if (rest == S_DOT) ERR("misplaced dot('.') while reading list");
 
                 token = read_token();
                 if (token == S_RPAREN) {
                     if (bracketed) {
-                        CALLERROR("bracketed list terminated by parenthesis");
+                        ERR("bracketed list terminated by parenthesis");
                     }
                     lst = reverse_list(lst, rest);
                     return lst;
                 }
                 if (token == S_RBRACK) {
                     if (!bracketed) {
-                        CALLERROR("parenthesized list terminated by bracket");
+                        ERR("parenthesized list terminated by bracket");
                     }
                     lst = reverse_list(lst, rest);
                     return lst;
                 }
-                if (token == S_EOF) CALLERROR("unexpected end-of-file while reading list");
-                CALLERROR("more than one item following dot('.') while reading list");
+                if (token == S_EOF) ERR("unexpected end-of-file while reading list");
+                ERR("more than one item following dot('.') while reading list");
             }
             if (token->isCons()) { }
             lst = new Cons(token, lst);
         }
 
-        CALLERROR("unexpected end-of-file while reading list");
+        ERR("unexpected end-of-file while reading list");
 
         return const_cast<Object*>(&Object::undef);
     }
@@ -404,7 +405,7 @@ namespace glaze {
         if (strcmp(buf, "nil") == 0) return const_cast<Object*>(&Object::nil);
         if (strcmp(buf, "t") == 0) return const_cast<Object*>(&Object::t);
 
-        return const_cast<Symbol*>(symbol_table.get(buf));
+        return const_cast<Symbol*>(symbol_table->get(buf));
     }
 
     Object* Reader::read_symbol()
@@ -426,7 +427,7 @@ namespace glaze {
         c = get();
 
         if (c == 0 || c == EOF) return S_EOF;
-        if (c > 0x007F)  CALLERROR("invalid character. c = %d at %d", c, m_read);
+        if (c > 0x007F)  ERR("invalid character. c = %d at %d", c, m_read);
 
         if (whitespace_p(c)) goto top;
 
@@ -451,12 +452,12 @@ namespace glaze {
             // reader macros
         case '\'': {
             Object* obj = read_expr();
-            if (obj == S_EOF) CALLERROR("unexpected end-of-file following quotation-mark(')");
+            if (obj == S_EOF) ERR("unexpected end-of-file following quotation-mark(')");
             return make_list_2items(S_QUOTE, obj);
         }
         case '`' : {
             Object* obj = read_expr();
-            if (obj == S_EOF) CALLERROR("unexpected end-of-file following grave-accent(`)");
+            if (obj == S_EOF) ERR("unexpected end-of-file following grave-accent(`)");
             return make_list_2items(S_QUASIQUOTE, obj);
         }
         case '+' :
@@ -468,12 +469,12 @@ namespace glaze {
             c = get();
             switch (c) {
             case EOF:
-                CALLERROR("unexpected end-of-file following sharp-sign(#)");
+                ERR("unexpected end-of-file following sharp-sign(#)");
             }
-            CALLERROR("invalid lexical syntax #%c", c);
+            ERR("invalid lexical syntax #%c", c);
         case ',':
             c = get();
-            if (c == EOF) CALLERROR("unexpected end-of-file following comma(,)");
+            if (c == EOF) ERR("unexpected end-of-file following comma(,)");
             if (c == '@') return make_list_2items(S_UNQUOTE_SPLICING, read_expr());
             unget();
             return make_list_2items(S_UNQUOTE, read_expr());
@@ -487,8 +488,8 @@ namespace glaze {
     {
         Object* token = read_token();
 
-        if (token == S_RPAREN) CALLERROR("unexpected closing parenthesis");
-        if (token == S_RBRACK) CALLERROR("unexpected closing bracket");
+        if (token == S_RPAREN) ERR("unexpected closing parenthesis");
+        if (token == S_RBRACK) ERR("unexpected closing bracket");
         if (token == S_LPAREN) return read_list(false);
         if (token == S_LBRACK) return read_list(true);
         return token;

@@ -10,6 +10,7 @@ namespace glaze {
    /*
    **  Object
    */
+    // class Symbol;
 
     class Object
 
@@ -26,14 +27,17 @@ namespace glaze {
         static const Object nil;
         static const Object t;
 
+        static const int type_id = 0x01;
+        virtual inline const int get_type_id() const { return type_id; }
+
         virtual ssize_t print() const { return print(stdout); }
         virtual ssize_t print(FILE* fp) const;
         virtual ssize_t print(int fd) const;
         virtual ssize_t print(char* target, size_t size) const;
 
-        inline bool isUndef()  const { return this == &undef; }
-        inline bool isNil()    const { return this == &nil; }
-        inline bool isT()      const { return this == &t; }
+        inline bool isUndef()  const { return this == (Object*)(&undef); }
+        inline bool isNil()    const { return this == (Object*)(&nil); }
+        inline bool isT()      const { return this == (Object*)(&t); }
 
         bool isObject()   const;
         bool isSymbol()   const;
@@ -41,11 +45,11 @@ namespace glaze {
         bool isFunction() const;
         bool isSubr()     const;
         bool isClosure()  const;
-        //bool isMacro()    const;
         bool isSyntax()   const;
         bool isNumber()   const;
-        //bool isCharacters() const;
         bool isString()   const;
+        //bool isMacro()    const;
+        //bool isCharacters() const;
         //bool isVector()   const;
         //bool isTable()    const;
         //bool isTagged()  const;
@@ -81,6 +85,10 @@ namespace glaze {
         inline const char* name() const { return m_name_ptr; };
         const bool operator==(const Symbol& target) const;
 
+        static const int type_id = 0x02;
+        virtual inline const int get_type_id() const { return type_id; }
+
+        virtual ssize_t print() const { return print(stdout); }
         virtual ssize_t print(FILE* fp) const;
         virtual ssize_t print(int fd) const;
         virtual ssize_t print(char* target, size_t size) const;
@@ -105,6 +113,10 @@ namespace glaze {
         inline Object* setCar(Object* car_ptr) { m_car_ptr = car_ptr; return this; }
         inline Object* setCdr(Object* cdr_ptr) { m_cdr_ptr = cdr_ptr; return this; }
 
+        static const int type_id = 0x03;
+        virtual inline const int get_type_id() const { return type_id; }
+
+        virtual ssize_t print() const { return print(stdout); }
         virtual ssize_t print(FILE* fp) const;
         virtual ssize_t print(int fd) const;
         virtual ssize_t print(char* target, size_t size) const;
@@ -145,6 +157,7 @@ namespace glaze {
         inline void* func() { return m_proc; }
         inline const char* name() const { return m_name_ptr; }
 
+        virtual ssize_t print() const { return print(stdout); }
         virtual ssize_t print(FILE* fp) const;
         virtual ssize_t print(int fd) const;
         virtual ssize_t print(char* target, size_t size) const;
@@ -175,6 +188,7 @@ namespace glaze {
 
         void setName(const char* name);
 
+        virtual ssize_t print() const { return print(stdout); }
         virtual ssize_t print(FILE* fp) const;
         virtual ssize_t print(int fd) const;
         virtual ssize_t print(char* target, size_t size) const;
@@ -199,6 +213,7 @@ namespace glaze {
         Number(const int64_t n) {operator=(n);}
         Number(const double n)  {operator=(n);}
 
+        virtual ssize_t print() const { return print(stdout); }
         virtual ssize_t print(FILE* fp) const;
         virtual ssize_t print(int fd) const;
         virtual ssize_t print(char* target, size_t size) const;
@@ -251,6 +266,7 @@ namespace glaze {
         Str(const char* src, size_t len);
         ~Str();
 
+        virtual ssize_t print() const { return print(stdout); }
         virtual ssize_t print(FILE* fp) const;
         virtual ssize_t print(int fd) const;
         virtual ssize_t print(char* target, size_t size) const;

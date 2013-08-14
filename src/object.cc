@@ -4,9 +4,9 @@
 
 namespace glaze {
 
-    const Object Object::undef;
-    const Object Object::nil;
-    const Object Object::t;
+    const Object Object::undef   = Symbol("undef", 6);
+    const Object Object::nil     = Symbol("nil", 4);
+    const Object Object::t       = Symbol("t", 2);
 
     /*
     **  Object
@@ -26,7 +26,7 @@ namespace glaze {
     Object::print(char* target, size_t size) const
     {
         int res = snprintf(target, size, "%s", getObjectString());
-        if (res < 0) CALLERROR("snprintf() failed.");
+        if (res < 0) ERR("snprintf() failed.");
         if (size <= res) return size - 1;
         return res;
     }
@@ -40,21 +40,22 @@ namespace glaze {
     bool
     Object::isObject() const
     {
-        return typeid(*this) == typeid(Object);
+        return get_type_id() == Object::type_id;
     }
 
     bool
     Object::isSymbol() const
     {
-        return typeid(*this) == typeid(Symbol);
+        return get_type_id() == Symbol::type_id;
     }
 
     bool
     Object::isCons() const
     {
-        return typeid(*this) == typeid(Cons);
+        return get_type_id() == Cons::type_id;
     }
 
+    /*
     bool
     Object::isFunction() const
     {
@@ -74,11 +75,12 @@ namespace glaze {
     {
         return typeid(*this) == typeid(Closure);
     }
+    */
 
     bool
     Object::isNumber() const
     {
-        return typeid(*this) == typeid(Number);
+        return get_type_id() == Number::type_id;
     }
 
     void
@@ -104,6 +106,7 @@ namespace glaze {
     /*
     ** Symbol
     */
+
 
     Symbol::Symbol(const char* src, size_t len) : m_name_heap(NULL)
     {
@@ -139,7 +142,7 @@ namespace glaze {
     {
         int r;
         if(r = fprintf(fp, "%s", m_name_ptr) < 0)
-            CALLERROR("fprintf() failed.");
+            ERR("fprintf() failed.");
 
         return r;
     }
@@ -149,7 +152,7 @@ namespace glaze {
     {
         int r;
         if(r = fdprintf(fd, "%s", m_name_ptr) < 0)
-            CALLERROR("dprintf() failed.");
+            ERR("dprintf() failed.");
 
         return r;
     }
@@ -158,7 +161,7 @@ namespace glaze {
     Symbol::print(char* target, size_t size) const
     {
         int res = snprintf(target, size, "%s", m_name_ptr);
-        if (res < 0) CALLERROR("snprintf() failed.");
+        if (res < 0) ERR("snprintf() failed.");
         if (size <= res) return size - 1;
 
         return res;
@@ -179,7 +182,7 @@ namespace glaze {
         Object* x    = m_car_ptr;                               \
         Object* next = m_cdr_ptr;                               \
                                                                 \
-        if (FN(FN_ARG, "(") < 0) CALLERROR(FN_STR"() failed.");         \
+        if (FN(FN_ARG, "(") < 0) ERR(FN_STR"() failed.");         \
         ret++;                                                          \
                                                                         \
         while(1) {                                                      \
@@ -189,21 +192,21 @@ namespace glaze {
             if (!next->isCons()) {                                      \
                 if (!next->isNil()) {                                   \
                     if (FN(FN_ARG, " . ") < 0)                          \
-                        CALLERROR(FN_STR"() failed.");                  \
+                        ERR(FN_STR"() failed.");                  \
                     ret += (3 + next->print(FN_ARG));                   \
                 }                                                       \
                 break;                                                  \
             }                                                           \
                                                                         \
             /* isCons */                                                \
-            if (FN(FN_ARG, " ") < 0) CALLERROR(FN_STR"() failed.");     \
+            if (FN(FN_ARG, " ") < 0) ERR(FN_STR"() failed.");     \
             ret++;                                                      \
             x = static_cast<Cons*>(next)->car();                        \
             next = static_cast<Cons*>(next)->cdr();                     \
                                                                         \
         }                                                               \
                                                                         \
-        if (FN(FN_ARG, ")") < 0) CALLERROR(FN_STR"() failed.");         \
+        if (FN(FN_ARG, ")") < 0) ERR(FN_STR"() failed.");         \
         ret++;                                                          \
                                                                         \
         return ret;                                                     \
@@ -225,7 +228,7 @@ namespace glaze {
 
 #define STRING_PRINT_LIST_CHECK()                           \
         {                                                   \
-            if (res < 0) CALLERROR("snprintf() failed.");   \
+            if (res < 0) ERR("snprintf() failed.");   \
             if (size <= res) return ret + (size - 1);       \
             ret  += res;                                    \
             size -= res;                                    \
@@ -311,7 +314,7 @@ namespace glaze {
     Subr::print(char* target, size_t size) const
     {
         int res = snprintf(target, size, "#<subr %s>", m_name);
-        if (res < 0) CALLERROR("snprintf() failed.");
+        if (res < 0) ERR("snprintf() failed.");
         if (size <= res) return size - 1;
 
         return res;
@@ -365,7 +368,7 @@ namespace glaze {
     Closure::print(char* target, size_t size) const
     {
         int res = snprintf(target, size, "#<closure %s>", m_name_ptr);
-        if (res < 0) CALLERROR("snprintf() failed.");
+        if (res < 0) ERR("snprintf() failed.");
         if (size <= res) return size - 1;
 
         return res;
@@ -383,7 +386,7 @@ namespace glaze {
         case FLOAT:
             return operator=(n.getFloatnum());
         default:
-            CALLERROR("unknown number type.");
+            ERR("unknown number type.");
         }
         return *this;
     }
@@ -420,7 +423,7 @@ namespace glaze {
         case 3: /* 11 float float */                                    \
             return RETURN_FN (m_value.floatnum OP n.getFloatnum());         \
         default:                                                        \
-            CALLERROR("number " OPSTR " is failed.");                   \
+            ERR("number " OPSTR " is failed.");                   \
         }                                                               \
         return ERROR_RETURN;                                            \
     }
@@ -465,14 +468,14 @@ namespace glaze {
         {
         case FIXNUM:
             if (ret = fprintf(fp, "%lld", m_value.fixnum) < 0)
-                CALLERROR("snprintf() failed.");
+                ERR("snprintf() failed.");
             return ret;
         case FLOAT:
             if (ret = fprintf(fp, "%g", m_value.floatnum) < 0)
-                CALLERROR("snprintf() failed.");
+                ERR("snprintf() failed.");
             return ret;
         default:
-            CALLERROR("unknown number type.");
+            ERR("unknown number type.");
         }
         return ret;
     }
@@ -485,14 +488,14 @@ namespace glaze {
         {
         case FIXNUM:
             if (ret = fdprintf(fd, "%lld", m_value.fixnum) < 0)
-                CALLERROR("snprintf() failed.");
+                ERR("snprintf() failed.");
             return ret;
         case FLOAT:
             if (ret = fdprintf(fd, "%g", m_value.floatnum) < 0)
-                CALLERROR("snprintf() failed.");
+                ERR("snprintf() failed.");
             return ret;
         default:
-            CALLERROR("unknown number type.");
+            ERR("unknown number type.");
         }
         return ret;
     }
@@ -505,14 +508,14 @@ namespace glaze {
         {
         case FIXNUM:
             if (ret = snprintf(target, size, "%lld", m_value.fixnum) < 0)
-                CALLERROR("snprintf() failed.");
+                ERR("snprintf() failed.");
             return ret;
         case FLOAT:
             if (ret = snprintf(target, size, "%g", m_value.floatnum) < 0)
-                CALLERROR("snprintf() failed.");
+                ERR("snprintf() failed.");
             return ret;
         default:
-            CALLERROR("unknown number type.");
+            ERR("unknown number type.");
         }
         return ret;
     }
@@ -619,15 +622,15 @@ namespace glaze {
     {
         ssize_t s = 0;
         if(fprintf(fp, "\"") < 0)
-            CALLERROR("fprintf() failed.");
+            ERR("fprintf() failed.");
         s++;
 
         if(fprintf(fp, "%s", m_ptr) < 0)
-            CALLERROR("fprintf() failed.");
+            ERR("fprintf() failed.");
         s+=m_len;
 
         if(fprintf(fp, "\"") < 0)
-            CALLERROR("fprintf() failed.");
+            ERR("fprintf() failed.");
         s++;
 
         return s;
@@ -637,15 +640,15 @@ namespace glaze {
     {
         ssize_t s = 0;
         if(fdprintf(fd, "\"") < 0)
-            CALLERROR("dprintf() failed.");
+            ERR("dprintf() failed.");
         s++;
 
         if(fdprintf(fd, m_ptr) < 0)
-            CALLERROR("dprintf() failed.");
+            ERR("dprintf() failed.");
         s+=m_len;
 
         if(fdprintf(fd, "\"") < 0)
-            CALLERROR("dprintf() failed.");
+            ERR("dprintf() failed.");
         s++;
 
         return s;
@@ -656,7 +659,7 @@ namespace glaze {
     {
 
         int res = snprintf(target, size, "\"%s\"", m_ptr);
-        if (res < 0) CALLERROR("snprintf() failed.");
+        if (res < 0) ERR("snprintf() failed.");
         if (size <= res) return size - 1;
 
         return res;

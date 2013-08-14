@@ -1,4 +1,4 @@
-;;; *** OPERATORS ***
+;; *** OPERATORS ***
 
 ;;; util
 (def difference (f lis1 lis2)
@@ -393,7 +393,9 @@
                             c))
                       args
                       ;; VM will push the number of arguments to the stack.
-                      (compile (len args) e s f (list 'argument c))))
+                      ; (compile (len args) e s f (list 'argument c))
+                      (list 'argument-length (len args) c)
+                      ))
 
                   (return (if (is-tail? next) c (list 'frame c next)))))))
 
@@ -459,7 +461,10 @@
                     ((car macro-tables) firstex))
                (smacex (apply it (cdr exp)) binds)
                (+ (list firstex)
-                  (map [smacex _ binds] (cdr exp)))))))))
+                  (map [smacex _ binds] (cdr exp)))))))
+
+    ;; else constant.
+    exp))
 
 (smac if x
       (with (testc (car x)
@@ -494,7 +499,8 @@
 (def compile-top-level (exp)
   (ccc (fn (c)
          (= throw c)
-         (compile (smacex exp nil) nil nil nil '(halt)))))
+         (let exp2 (smacex exp nil)
+           (compile exp2 nil nil nil '(halt))))))
 
 (mac record (vars val . exps)
   `(apply (fn ,vars ,@exps) ,val))
@@ -511,6 +517,65 @@
                          (record ,(cadr c) (cdr ,target-s) ,@(cddr c))))))
                conds)
            ))))
+
+(def code-len (code)
+  (record-case code
+    (assign-local (n nex) (+ 2 (code-len nex)))
+    (assign-free  (n nex) (+ 2 (code-len nex)))
+    (assign-global (n nex) (+ 2 (code-len nex)))
+    (refer-local (n nex)  (+ 2 (code-len nex)))
+    (refer-free  (n nex)  (+ 2 (code-len nex)))
+    (refer-global (n nex) (+ 2 (code-len nex)))
+    (indirect     (nex)   (+ 1 (code-len nex)))
+    (constant     (o nex) (+ 2 (code-len nex)))
+    (argument-length (n nex) (+ 2 (code-len nex)))
+    (test (thenc elsec)   (+ 2 (code-len thenc) (code-len elsec)))
+    (box  (n nex)         (+ 2 (code-len nex)))
+    (argument  (nex)      (+ 1 (code-len nex)))
+    (close (x nex after dotpos) (+ 4 (code-len nex) (code-len after)))
+    (frame (x nex)        (+ 1 (code-len x) (code-len nex)))
+    (tco-hinted-apply ()  1)
+    (apply ()             1)
+    (shift (x nex)        (+ 2 (code-len nex)))
+    (conti (x nex)        (+ 2 (code-len nex)))
+    (return ()            1)
+    (halt   ()            1)))
+
+(def assembler (code)
+  ((afn (i code)
+    (record-case code
+      (assign-local  (n nex) `((assign-local ,n) ,@(self (+ 1 i) nex)))
+      (assign-free   (n nex) `((assign-free ,n) ,@(self (+ 1 i) nex)))
+      (assign-global (n nex) `((assign-global ,n) ,@(self (+ 1 i) nex)))
+      (refer-local  (n nex) `((refer-local ,n) ,@(self (+ 1 i) nex)))
+      (refer-free   (n nex) `((refer-free ,n) ,@(self (+ 1 i) nex)))
+      (refer-global (n nex) `((refer-global ,n) ,@(self (+ 1 i) nex)))
+      (indirect     (nex)   `((indirect) ,@(self (+ 1 i) nex)))
+      (constant     (o nex) `((constant ,o) ,@(self (+ 1 i) nex)))
+      (argument-length (n nex) `((argument-length ,n) ,@(self (+ 1 i) nex)))
+      (test (thenc elsec)   `((test ,(+ 2 (code-len thenc)))
+                                 ,@(self (+ 1 i) thenc)
+                                 ,@(self (+ 1 i (code-len thenc)) elsec)))
+      (box (n nex)          `((box n) ,@(self (+ i 1) nex)))
+      (argument (nex)       `((argument) ,@(self (+ i 1) nex)))
+      (close (x nex after dotpos)
+                            `((close ,x ,dotpos ,(+ 4 (code-len nex)))
+                              ,@(self (+ i 1) nex)
+                              ,@(self (+ i 1 (code-len nex)) after)))
+
+      (frame (x nex)        `((frame ,(+ 2 (code-len x))) ,@(self (+ i 2) x) ,@(self (+ i 2 (code-len x)) nex)))
+      (tco-hinted-apply ()  `((tco-hinted-apply)))
+      (apply ()             `((apply)))
+      (shift (x nex)        `((shift ,x) ,@(self (+ i 1) nex)))
+      (conti (x nex)        `((conti ,x) ,@(self (+ i 1) nex)))
+      (return ()            `((return)))
+      (halt ()              `((halt))))) 0 code))
+
+(def print-assembly (asm)
+  (pr "(\n")
+  (on i asm
+    (pr i "\t;; " index "\n"))
+  (pr ")\n"))
 
 (def disps xs
   (if xs
@@ -529,7 +594,7 @@
 
   (record-case asm
       (assign-local (n nex)
-        (print i "ASIGN_LOCAL" n)
+        (print i "ASSIGN_LOCAL" n)
         (print-asm nex i))
       (assign-free  (n nex)
         (print i "ASSIGN_FREE" n)
@@ -552,10 +617,13 @@
       (constant     (o nex)
         (print i "CONSTANT" o)
         (print-asm nex i))
+      (argument-length (n nex)
+        (print i "ARGLEN" n)
+        (print-asm nex i))
       (test         (thenc elsec)
         (print i "TEST")
         (print-asm thenc (+ i 1))
-        (print-asm elsec (+ i 1)))
+        (print-asm elsec (+ i)))
       (box          (n x)
         (print i "BOX" n)
         (print-asm x i))
@@ -585,6 +653,7 @@
       (halt         ()
         (print i "HALT")))))
 
+
 ;; tests
 (compile 'a (cons '(a) '()) '() '() '(halt))
 (refer-local 0 (halt))
@@ -598,7 +667,55 @@
 (compile 'a (cons '(a) '()) '(a) '() '(halt))
 (refer-local 0 (indirect (halt)))
 
-(compile-top-level '(assign a (list 1 2)))
+(assembler (compile-top-level '(if (- (+ 1 2) 1) a b)))
+
+((frame 23)
+ (constant 1)
+ (argument)
+ (frame 13)
+ (constant 2)
+ (argument)
+ (constant 1)
+ (argument)
+ (argument-length 2)
+ (refer-global +)
+ (apply)
+ (argument)
+ (argument-length 2)
+ (refer-global -)
+ (apply)
+ (test 5)
+ (refer-global a)
+ (halt)
+ (refer-global b)
+ (halt))
+
+((frame 23)
+ (constant 1)
+ (argument)
+ (frame 13)
+ (constant 2)
+ (argument)
+ (constant 1)
+ (argument)
+ (argument-length 2)
+ (refer-global +)
+ (apply)
+ (argument)
+ (argument-length 2)
+ (refer-global -)
+ (apply)
+ (halt))
+
+((frame 13)
+ (constant 2)
+ (argument)
+ (constant 1)
+ (argument)
+ (argument-length 2)
+ (refer-global list)
+ (apply)
+ (halt))
 
 (print-asm
   (compile-top-level
@@ -608,6 +725,15 @@
                (difference f (cdr lis1) lis2)
                (cons (car lis1)
                      (difference f (cdr lis1) lis2)))))) 0)
+
+(print-assembly
+  (compile-top-level
+    '(def difference (f lis1 lis2)
+       (if lis1
+           (if (mem (car lis1) lis2)
+               (difference f (cdr lis1) lis2)
+               (cons (car lis1)
+                     (difference f (cdr lis1) lis2)))))))
 
 (print-asm
   (compile-top-level
@@ -634,3 +760,21 @@
              (assign e 'z)
              (assign f 'a)
              (assign g 'b)))))) 0)
+
+
+
+
+(frame 
+  (refer-local 2 (argument (frame (refer-local 1 (argument (constant 1 (argument (refer-global car (apply)))))) (argument (constant 2 (argument (refer-global mem (apply))))))))
+  (test (refer-local 2 (argument (frame (refer-local 1 (argument (constant 1 (argument (refer-global cdr (apply)))))) (argument (refer-local 0 (argument (constant 3 (argument (refer-global difference (shift 3 (tco-hinted-apply))))))))))) (frame (refer-local 2 (argument (frame (refer-local 1 (argument (constant 1 (argument (refer-global cdr (apply)))))) (argument (refer-local 0 (argument (constant 3 (argument (refer-global difference (apply)))))))))) (argument (frame (refer-local 1 (argument (constant 1 (argument (refer-global car (apply)))))) (argument (constant 2 (argument (refer-global cons (shift 2 (tco-hinted-apply)))))))))))
+
+
+
+
+
+
+
+
+
+(close 0 (refer-local 1 (test 
+ (refer-global nil (return)))) (assign-global difference (halt)) -1)

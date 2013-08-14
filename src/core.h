@@ -17,7 +17,7 @@
 #include <string>
 
 #define array_sizeof(a) ((int)(sizeof(a)/sizeof(a[0])))
-#define CALLERROR(...) error(__FILE__, __LINE__, __VA_ARGS__)
+#define ERR(...) error(__FILE__, __LINE__, __VA_ARGS__)
 
 #define REQUIRE_GC_
 

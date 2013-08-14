@@ -1,6 +1,6 @@
 OBJECTS=$(shell ls *.cc | sed -e 's/\.cc/\.o/g')
-CC=gcc-apple-4.2
-CXX=g++-apple-4.2
+CC=gcc
+CXX=g++
 LDFLAGS+=-lgc
 
 .PHONY:			all clean

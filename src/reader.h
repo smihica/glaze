@@ -4,6 +4,7 @@
 #include "core.h"
 #include "object.h"
 #include "symbol_table.h"
+#include "context.h"
 
 namespace glaze {
 
@@ -11,7 +12,7 @@ namespace glaze {
 
     class Reader {
     public:
-        Reader();
+        Reader(Context* cont);
         ~Reader();
 
         Object* read();
@@ -30,7 +31,7 @@ namespace glaze {
 
     private:
 
-        SymbolTable symbol_table;
+        SymbolTable* symbol_table;
 
         typedef struct _state {
             int         fd;
