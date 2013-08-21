@@ -10,5 +10,5 @@ src/lib/*.core
 glaze
 doc
 memo
-src/lib
+src/glz
 
