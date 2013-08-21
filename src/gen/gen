@@ -1,0 +1,6 @@
+#!/bin/bash
+dir="$(pwd)"/"$(dirname $0)"
+
+cd $dir
+
+python ./char_functions_table.py > ../char_functions_table.h
