@@ -2,7 +2,7 @@ __!!! NOW WORK IN PROGRESS !!!__
 
 ## glaze
 
-glaze is an Arc implementation project written in C++ / Arc.
+glaze is an Arc implementation project written in C / Arc.
 
 ## arc
 
